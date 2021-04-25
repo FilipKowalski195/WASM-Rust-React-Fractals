@@ -1,3 +1,6 @@
+#![feature(wasm_simd)]
+mod math;
+
 extern crate wasm_bindgen;
 
 use wasm_bindgen::prelude::*;
@@ -15,5 +18,33 @@ extern {
 
 #[wasm_bindgen]
 pub fn greet() {
-    alert("Hello, wasm-hello-world!");
+
+    console_error_panic_hook::set_once();
+
+    let perf = window()
+        .expect("Window expected")
+        .performance()
+        .expect("Performance expected");
+
+    let time = perf.now();
+
+    let gen = Generator::MANDELBROT.create();
+
+    let conf = FractalConfig {
+        start_re: -1.45,
+        end_re: 2.0,
+        re_steps: 2000,
+
+        start_im: 0.0043,
+        end_im: 1.0,
+        im_steps: 1000,
+
+        max_iters: 500
+    };
+
+    let result = gen.generate(&conf);
+
+
+    alert(&(perf.now() - time).to_string());
+    alert(&result[0].iterations.to_string());
 }

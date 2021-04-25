@@ -12,6 +12,7 @@ default = ["console_error_panic_hook"]
 
 [dependencies]
 wasm-bindgen = "0.2.63"
+web-sys = { version = "0.3.50", features = ["Performance", "Window"] }
 
 console_error_panic_hook = { version = "0.1.6", optional = true }
 
