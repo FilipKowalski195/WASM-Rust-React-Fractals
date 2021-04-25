@@ -2,8 +2,14 @@
 mod math;
 
 extern crate wasm_bindgen;
+extern crate web_sys;
+extern crate console_error_panic_hook;
+use std::panic;
 
 use wasm_bindgen::prelude::*;
+use math::{FractalGenerator, Generator, FractalConfig};
+use math::mandelbrot::MandelbrotGenerator;
+use web_sys::window;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
