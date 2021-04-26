@@ -1,15 +1,13 @@
 import React, { useState } from 'react'
+import Canvas from './canvas'
 
-import photo from '../imgs/julia.png'
 export default function JuliaSet() {
 
     const [imageState, setImageState] = useState('loading')
     
     return (
         <div>
-            <img
-                src={photo}
-            /> 
+            <Canvas height={1250} width={1000} />
         </div>
     )
 }

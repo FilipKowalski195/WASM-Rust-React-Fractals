@@ -1,11 +1,13 @@
 import React from 'react'
+import Canvas from './canvas'
 
-import photo from '../imgs/mandelbrot.png'
 
 export default function MandelbrotSet() {
+    
     return (
         <div>
-            <img src={photo} /> 
+          <Canvas height={1250} width={1000} />
         </div>
     )
 }
+
