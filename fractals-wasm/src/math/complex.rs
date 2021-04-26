@@ -12,9 +12,12 @@ impl ComplexF64 {
         }
     }
 
+    #[inline(always)]
     pub fn re(&self) -> f64 {
         self.re
     }
+
+    #[inline(always)]
     pub fn im(&self) -> f64 {
         self.im
     }

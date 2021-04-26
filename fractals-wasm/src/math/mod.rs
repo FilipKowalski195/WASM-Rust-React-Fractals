@@ -1,6 +1,5 @@
 use math::mandelbrot::MandelbrotGenerator;
 
-use std::iter;
 use math::complex::ComplexF64;
 use math::julia::JuliaGenerator;
 

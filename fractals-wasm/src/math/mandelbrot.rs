@@ -1,7 +1,6 @@
 use math::{FractalGenerator, LinearFractalGenerator, FractalConfig};
 use math::FractalPoint;
 use math::complex::ComplexF64;
-use std::arch::wasm32::*;
 
 pub struct MandelbrotGenerator;
 
