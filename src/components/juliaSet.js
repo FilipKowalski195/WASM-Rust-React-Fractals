@@ -1,13 +1,17 @@
-import React, { useState } from 'react'
-import Canvas from './canvas'
+import React, {Component} from "react";
 
-export default function JuliaSet() {
+class JuliaSet extends Component {
 
-    const [imageState, setImageState] = useState('loading')
-    
+  componentDidMount() {
+    let canvas = this.refs.canvas.getContext('2d');
+    canvas.fillRect(0, 0, 100, 100);
+  }
+
+  render() {
     return (
-        <div>
-            <Canvas height={1250} width={1000} />
-        </div>
+        <canvas ref="canvas" width={1250} height={1000}/>
     )
+  }
 }
+
+export default JuliaSet;
