@@ -2,9 +2,11 @@ use math::mandelbrot::MandelbrotGenerator;
 
 use std::iter;
 use math::complex::ComplexF64;
+use math::julia::JuliaGenerator;
 
 pub(crate) mod mandelbrot;
 pub(crate) mod complex;
+pub(crate) mod julia;
 
 #[derive(Copy, Clone)]
 pub struct FractalPoint {
@@ -21,7 +23,7 @@ impl Generator {
     pub fn create(&self) -> Box<dyn FractalGenerator> {
         return match self {
             Generator::MANDELBROT => { Box::new(MandelbrotGenerator {}) }
-            Generator::JULIA(_, _) => { panic!("Not yet :(") }
+            Generator::JULIA(x, y) => { Box::new(JuliaGenerator::new(*x, *y)) }
         }
     }
 }
