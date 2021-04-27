@@ -22,6 +22,42 @@ class FractalsRenderer {
 
     progressListeners = []
 
+    initGamepad() {
+        window.addEventListener('gamepadconnected', (e) => {
+            this.padIndex = e.gamepad.index;
+        })
+
+        setInterval(() => {
+            if (this.gpad.gamepad != null) {
+                const x1 = navigator.getGamepads()[this.padIndex].axes[0]
+                const y1 = navigator.getGamepads()[this.padIndex].axes[1]
+
+                let xMove = 0;
+                let yMove = 0;
+
+                console.log(x1, y1)
+
+                if (Math.abs(x1) > 0.04) {
+                    xMove = x1 * 100;
+                }
+
+                if (Math.abs(y1) > 0.04) {
+                    yMove = y1 * 100;
+                }
+
+                if (xMove !== 0 || yMove !== 0) {
+                    this.movePlaneByMouseMovement(-xMove, -yMove)
+                }
+
+                const y2 = navigator.getGamepads()[this.padIndex].axes[3]
+
+                if (Math.abs(y2) > 0.02) {
+                    this.zoomByWheelDeltaY(y2 * 100)
+                }
+            }
+        }, 150)
+    }
+
     injectCanvas(canvas) {
         this.pool.onEachMessage = (e) => this.onPoolAnswer(e);
 
