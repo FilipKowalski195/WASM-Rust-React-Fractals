@@ -8,6 +8,7 @@ class MandelbrotSet extends Component {
     plane: [-1.6, 0.4, -0.8, 0.8],
     scaling: 5,
     workers: 20,
+    maxIters: 1000
   }
 
   realWorkers = this.setup.workers + (this.setup.res[1] % this.setup.workers === 0 ? 0 : 1)
@@ -61,11 +62,11 @@ class MandelbrotSet extends Component {
     })
 
 
-    this.refs.canvas.addEventListener('mousedown', (e) => {
+    this.refs.canvas.addEventListener('mousedown', () => {
       this.isMoving = true;
     });
 
-    this.refs.canvas.addEventListener('mouseup', (e) => {
+    this.refs.canvas.addEventListener('mouseup', () => {
       this.isMoving = false;
     });
 
@@ -102,7 +103,8 @@ class MandelbrotSet extends Component {
         plane: this.setup.plane,
         scaling: fullRes ? 1 : this.setup.scaling,
         partNum: i,
-        partCount: this.setup.workers
+        partCount: this.setup.workers,
+        maxIters: this.setup.maxIters
       });
     }
   }

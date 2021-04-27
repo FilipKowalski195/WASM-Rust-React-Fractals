@@ -9,6 +9,7 @@ use wasm_bindgen::prelude::*;
 use math::{Generator, FractalConfig};
 use color::{GrayscaleTransformation, ColorTransformation};
 use web_sys::window;
+use std::cmp::max;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -60,7 +61,8 @@ pub struct FramePartConfig {
     pub plane: ComplexPlaneRange,
     pub scaling: usize,
     pub part_num: usize,
-    pub part_count: usize
+    pub part_count: usize,
+    pub max_iters: usize,
 }
 
 impl FramePartConfig {
@@ -123,7 +125,8 @@ pub fn generate_frame_part_mandelbrot(
     plane: Vec<f64>,
     scaling: usize,
     part_num: usize,
-    part_count: usize
+    part_count: usize,
+    max_iters: usize,
 ) -> Vec<u8> {
     let conf = FramePartConfig {
         res: Resolution { width: resolution[0], height: resolution[1] },
@@ -136,6 +139,7 @@ pub fn generate_frame_part_mandelbrot(
         scaling,
         part_num,
         part_count,
+        max_iters,
     };
 
     return generate_frame_part(conf, Generator::MANDELBROT)
@@ -158,7 +162,7 @@ fn generate_frame_part(config: FramePartConfig, generator: Generator) -> Vec<u8>
         end_im: frame_plane.end_im,
         im_steps: config.frame_height(),
 
-        max_iters: 2000,
+        max_iters: 1000,
     };
 
     let result = gen.generate(&f_conf);

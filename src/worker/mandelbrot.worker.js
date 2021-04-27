@@ -8,13 +8,15 @@ onmessage = function (e) {
         const scaling = e.data.scaling;
         const partNum = e.data.partNum;
         const partCount = e.data.partCount;
+        const maxIters = e.data.maxIters
 
         const data = generate_frame_part_mandelbrot(
             Uint32Array.from(e.data.res),
             Float64Array.from(e.data.plane),
             scaling,
             partNum,
-            partCount
+            partCount,
+            maxIters
         );
 
         const height = e.data.res[1];
