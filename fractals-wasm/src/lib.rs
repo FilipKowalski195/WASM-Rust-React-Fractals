@@ -158,7 +158,7 @@ fn generate_frame_part(config: FramePartConfig, generator: Generator) -> Vec<u8>
         end_im: frame_plane.end_im,
         im_steps: config.frame_height(),
 
-        max_iters: 1000,
+        max_iters: 2000,
     };
 
     let result = gen.generate(&f_conf);

@@ -51,3 +51,38 @@ impl ColorTransformation for GrayscaleTransformation {
         return (greyscale, greyscale, greyscale)
     }
 }
+
+pub struct ElectricBlue;
+
+// impl ColorTransformation for ElectricBlue{
+//     fn determine_color(&self, point: &FractalPoint, max_iters: usize) -> (u8, u8, u8) {
+//         for (i = 0; i < 255; i++) {
+//             if (i < 32) {
+//                 r = 0;
+//                 g = 0;
+//                 b = i * 4;
+//             } else if (i < 64) {
+//                 r = (i - 32) * 8;
+//                 g = (i - 32) * 8;
+//                 b = 127 + (i - 32) * 4;
+//             } else if (i < 96) {
+//                 r = 255 - (i - 64) * 8;
+//                 g = 255 - (i - 64) * 8;
+//                 b = 255 - (i - 64) * 4;
+//             } else if (i < 128) {
+//                 r = 0;
+//                 g = 0;
+//                 b = 127 - (i - 96) * 4;
+//             } else if (i < 192) {
+//                 r = 0;
+//                 g = 0;
+//                 b = (i - 128);
+//             } else {
+//                 r = 0;
+//                 g = 0;
+//                 b = 63 - (i - 192);
+//             }
+//             colours[i] = (r << 24) + (g << 16) + (b << 8);
+//         }
+//     }
+// }
