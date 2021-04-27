@@ -28,7 +28,7 @@ class FractalsRenderer {
         })
 
         setInterval(() => {
-            if (this.gpad.gamepad != null) {
+            if (this.padIndex != null) {
                 const x1 = navigator.getGamepads()[this.padIndex].axes[0]
                 const y1 = navigator.getGamepads()[this.padIndex].axes[1]
 
