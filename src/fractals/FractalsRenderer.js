@@ -35,8 +35,6 @@ class FractalsRenderer {
                 let xMove = 0;
                 let yMove = 0;
 
-                console.log(x1, y1)
-
                 if (Math.abs(x1) > 0.04) {
                     xMove = x1 * 100;
                 }
