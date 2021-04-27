@@ -12,6 +12,7 @@ class RepeatedWorkerPool {
             worker.onmessage = (e) => this.onMessageHelper(e);
             this.workers.push(worker);
         }
+
     }
 
     onMessageHelper(event) {

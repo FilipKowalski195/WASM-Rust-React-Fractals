@@ -1,9 +1,6 @@
-
 const wasm = import('fractals-wasm')
 
-
 onmessage = function (e) {
-
     wasm.then(({generate_frame_part_mandelbrot}) => {
         const scaling = e.data.scaling;
         const partNum = e.data.partNum;
