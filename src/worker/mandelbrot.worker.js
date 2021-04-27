@@ -27,6 +27,4 @@ onmessage = function (e) {
             height: Math.floor(partNum === partCount && height % partCount !== 0 ? height % partCount : height / partCount)
         });
     })
-
-
 }

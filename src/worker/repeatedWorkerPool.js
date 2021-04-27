@@ -1,5 +1,6 @@
 class RepeatedWorkerPool {
 
+    todo = 0
 
     constructor(workerSupplier, count) {
         this.workers = []
@@ -14,17 +15,21 @@ class RepeatedWorkerPool {
     }
 
     onMessageHelper(event) {
-
+        this.todo--;
         if (this.onEachMessage != null) {
             this.onEachMessage(event)
         }
     }
 
     postMessage(data) {
+        this.todo++;
         this.workers[this.next].postMessage(data)
-        this.next = this.next >= this.workers.length ? 0 : this.next + 1;
+        this.next = this.next >= this.workers.length - 1 ? 0 : this.next + 1;
     }
 
+    isOccupied() {
+        return this.todo !== 0;
+    }
 
 }
 
