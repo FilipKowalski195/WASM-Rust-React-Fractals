@@ -65,7 +65,7 @@ pub struct FramePartConfig {
 
 impl FramePartConfig {
     fn is_last_leftover(&self) -> bool {
-        self.res.height % self.part_count != 0 && self.part_num == self.part_count - 1
+        self.res.height % self.part_count != 0 && self.part_num == self.part_count
     }
 
     fn height_split(&self) -> usize {
