@@ -7,8 +7,11 @@ class MandelbrotSet extends Component {
 
   componentDidMount() {
     this.renderer.injectCanvas(this.refs.canvas);
-    this.renderer.loadFrame(true);
-    this.renderer.initGamepad();
+    this.renderer.init();
+  }
+
+  componentWillUnmount() {
+    this.renderer.close()
   }
 
   render() {

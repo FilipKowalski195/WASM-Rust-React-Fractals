@@ -11,48 +11,87 @@ class FractalsRenderer {
         maxIters: 1000
     }
 
-    realWorkers = this.setup.workers + (this.setup.res[1] % this.setup.workers === 0 ? 0 : 1)
-    pool = new RepeatedWorkerPool(() => new Worker(), this.realWorkers)
+    fractalChanged = true;
+
+    realWorkers = this.setup.workers + (this.setup.res[1] % this.setup.workers === 0 ? 0 : 1);
+    pool = new RepeatedWorkerPool(() => new Worker(), this.realWorkers);
 
     isMovingPlane = false;
 
     fullResTask = null;
 
-    canvas = null
+    canvas = null;
 
-    progressListeners = []
+    firstAnswer = false;
 
-    initGamepad() {
+    progressListeners = [];
+
+    refreshLoop = null;
+
+    init() {
         window.addEventListener('gamepadconnected', (e) => {
             this.padIndex = e.gamepad.index;
         })
 
-        setInterval(() => {
-            if (this.padIndex == null) {
-                return;
+        this.refreshLoop = setInterval(() => {
+            this.processPadEvents()
+
+            if (this.fractalChanged && !this.pool.isOccupied()) {
+                this.loadFrame(false)
+                this.scheduleFullRes()
             }
+        }, 10)
+    }
 
-            const [x1, y1, _, y2] = navigator.getGamepads()[this.padIndex].axes
+    close() {
+        if (this.refreshLoop != null) {
+            clearInterval(this.refreshLoop)
+        }
+    }
 
-            let xMove = 0;
-            let yMove = 0;
+    loadFrame(fullRes) {
 
-            if (Math.abs(x1) > 0.04) {
-                xMove = x1 * 100;
-            }
+        this.progressListeners.forEach((listener) => listener(true))
 
-            if (Math.abs(y1) > 0.04) {
-                yMove = y1 * 100;
-            }
+        for (let i = 0; i < this.realWorkers; i++) {
+            this.pool.postMessage({
+                res: this.setup.res,
+                plane: this.setup.plane,
+                scaling: fullRes ? 1 : this.setup.scaling,
+                partNum: i,
+                partCount: this.setup.workers,
+                maxIters: fullRes ? this.setup.maxIters : this.setup.maxIters * 0.5
+            });
+        }
 
-            if (xMove !== 0 || yMove !== 0) {
-                this.movePlaneByMouseMovement(-xMove, -yMove)
-            }
+        this.fractalChanged = false;
+    }
 
-            if (Math.abs(y2) > 0.02) {
-                this.zoomByWheelDeltaY(y2 * 100)
-            }
-        }, 150)
+    processPadEvents() {
+        if (this.padIndex == null) {
+            return;
+        }
+
+        const [x1, y1, _, y2] = navigator.getGamepads()[this.padIndex].axes
+
+        let xMove = 0;
+        let yMove = 0;
+
+        if (Math.abs(x1) > 0.04) {
+            xMove = x1 * 100;
+        }
+
+        if (Math.abs(y1) > 0.04) {
+            yMove = y1 * 100;
+        }
+
+        if (xMove !== 0 || yMove !== 0) {
+            this.movePlaneByMouseMovement(-xMove, -yMove)
+        }
+
+        if (Math.abs(y2) > 0.02) {
+            this.zoomByWheelDeltaY(y2 * 100)
+        }
     }
 
     injectCanvas(canvas) {
@@ -99,10 +138,7 @@ class FractalsRenderer {
         this.setup.plane[2] -= yShrink;
         this.setup.plane[3] += yShrink;
 
-        if (!this.pool.isOccupied()) {
-            this.loadFrame(false)
-            this.scheduleFullRes()
-        }
+        this.fractalChanged = true
     }
 
     movePlaneByMouseMovement(movementX, movementY) {
@@ -116,10 +152,7 @@ class FractalsRenderer {
         this.setup.plane[2] -= yMove;
         this.setup.plane[3] -= yMove;
 
-        if (!this.pool.isOccupied()) {
-            this.loadFrame(false)
-            this.scheduleFullRes()
-        }
+        this.fractalChanged = true
     }
 
     getParticleX() {
@@ -134,23 +167,10 @@ class FractalsRenderer {
         return this.setup.res[0] / this.setup.res[1];
     }
 
-    loadFrame(fullRes) {
-
-        this.progressListeners.forEach((listener) => listener(true))
-
-        for (let i = 0; i < this.realWorkers; i++) {
-            this.pool.postMessage({
-                res: this.setup.res,
-                plane: this.setup.plane,
-                scaling: fullRes ? 1 : this.setup.scaling,
-                partNum: i,
-                partCount: this.setup.workers,
-                maxIters: fullRes ? this.setup.maxIters : this.setup.maxIters * 0.5
-            });
-        }
-    }
-
     onPoolAnswer(e) {
+
+        this.firstAnswer = true;
+
         if (!this.pool.isOccupied()) {
             this.progressListeners.forEach((listener) => listener(false))
         }
@@ -173,11 +193,11 @@ class FractalsRenderer {
 
         this.fullResTask = setTimeout(() => {
             this.loadFrame(true)
-        }, 400);
+        }, 300);
     }
 
     isFetching() {
-        return this.pool.isOccupied();
+        return !this.firstAnswer || this.pool.isOccupied();
     }
 
     addOnFetchingProgressChanged(listener) {
