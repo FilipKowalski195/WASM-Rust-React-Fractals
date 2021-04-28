@@ -60,7 +60,7 @@ class FractalsRenderer {
                 scaling: fullRes ? 1 : this.setup.scaling,
                 partNum: i,
                 partCount: this.setup.workers,
-                maxIters: fullRes ? this.setup.maxIters : this.setup.maxIters * 0.5
+                maxIters: fullRes ? this.setup.maxIters : this.setup.maxIters * 0.25
             });
         }
 
