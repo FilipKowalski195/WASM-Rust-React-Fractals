@@ -81,7 +81,14 @@ class FractalsRenderer {
     }
 
     zoomByWheelDeltaY(deltaY) {
-        const xShrink = this.getParticleX() * deltaY * this.getWidthHeightProportion();
+
+        const xParticle = this.getParticleX();
+
+        if (Math.abs(xParticle) < 9.0e-16 && deltaY < 0) {
+            return
+        }
+
+        const xShrink = xParticle * deltaY * this.getWidthHeightProportion();
 
         this.setup.plane[0] -= xShrink;
         this.setup.plane[1] += xShrink;
