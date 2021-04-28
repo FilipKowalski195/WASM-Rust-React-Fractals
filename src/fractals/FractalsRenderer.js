@@ -7,7 +7,7 @@ class FractalsRenderer {
         res: [1000, 800],
         plane: [-1.6, 0.4, -0.8, 0.8],
         scaling: 5,
-        workers: 20,
+        workers: navigator.hardwareConcurrency,
         maxIters: 1000
     }
 
@@ -56,6 +56,7 @@ class FractalsRenderer {
     }
 
     injectCanvas(canvas) {
+
         this.pool.onEachMessage = (e) => this.onPoolAnswer(e);
 
         this.canvas = canvas;
@@ -144,7 +145,7 @@ class FractalsRenderer {
                 scaling: fullRes ? 1 : this.setup.scaling,
                 partNum: i,
                 partCount: this.setup.workers,
-                maxIters: this.setup.maxIters
+                maxIters: fullRes ? this.setup.maxIters : this.setup.maxIters * 0.5
             });
         }
     }
@@ -172,7 +173,7 @@ class FractalsRenderer {
 
         this.fullResTask = setTimeout(() => {
             this.loadFrame(true)
-        }, 500);
+        }, 400);
     }
 
     isFetching() {
