@@ -3,18 +3,16 @@ import RepeatedWorkerPool from './worker/repeatedWorkerPool'
 
 class FractalsRenderer {
 
-    setup = {
-        res: [1000, 800],
-        plane: [-1.6, 0.4, -0.8, 0.8],
-        scaling: 5,
-        workers: navigator.hardwareConcurrency,
-        maxIters: 1000
-    }
+    setup = this.prepareSetup(
+        [1000, 800],
+        [-1.6, 0.4, -0.8, 0.8],
+        1000
+    );
 
     fractalChanged = true;
 
-    realWorkers = this.setup.workers + (this.setup.res[1] % this.setup.workers === 0 ? 0 : 1);
-    pool = new RepeatedWorkerPool(() => new Worker(), this.realWorkers);
+    parts = this.setup.workers + (this.setup.res[1] % this.setup.workers === 0 ? 0 : 1);
+    pool = new RepeatedWorkerPool(() => new Worker(), this.setup.workers);
 
     isMovingPlane = false;
 
@@ -29,6 +27,9 @@ class FractalsRenderer {
     refreshLoop = null;
 
     init() {
+
+        console.log(this.setup)
+
         window.addEventListener('gamepadconnected', (e) => {
             this.padIndex = e.gamepad.index;
         })
@@ -53,7 +54,7 @@ class FractalsRenderer {
 
         this.progressListeners.forEach((listener) => listener(true))
 
-        for (let i = 0; i < this.realWorkers; i++) {
+        for (let i = 0; i < this.parts; i++) {
             this.pool.postMessage({
                 res: this.setup.res,
                 plane: this.setup.plane,
@@ -195,6 +196,46 @@ class FractalsRenderer {
             this.loadFrame(true)
         }, 300);
     }
+
+    getCloserNumber(arr, number) {
+        let closer = arr[0]
+
+        for (const n of arr) {
+            if (Math.abs(n - number) < Math.abs(closer - number)) {
+                closer = n;
+            }
+        }
+
+        return closer;
+    }
+
+    prepareSetup(res, plane, iters) {
+
+        const factors = number => Array
+            .from(Array(number + 1), (_, i) => i)
+            .filter(i => number % i === 0)
+
+        const cores = navigator.hardwareConcurrency;
+
+        const possibleValues = factors(res[1])
+
+        let workers = this.getCloserNumber(possibleValues, cores)
+        let scaling = this.getCloserNumber(possibleValues, 5)
+
+        if (res[1] % 200 !== 0) {
+            throw new Error("Resolution must be divisible by 200 to " +
+                "provide high flexibility in workers distribution!");
+        }
+
+        return {
+            res: res,
+            plane: plane,
+            scaling: scaling,
+            workers: workers,
+            maxIters: iters
+        }
+    }
+
 
     isFetching() {
         return !this.firstAnswer || this.pool.isOccupied();
