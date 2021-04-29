@@ -4,27 +4,35 @@ import RepeatedWorkerPool from './worker/repeatedWorkerPool'
 class FractalsRenderer {
 
     setup = this.prepareSetup(
-        [1000, 800],
-        [-1.6, 0.4, -0.8, 0.8],
+        [1200, 600],
+        [-3.5, 2.5, -1.5, 1.5],
         1000
     );
 
-    fractalChanged = true;
-
-    parts = this.setup.workers + (this.setup.res[1] % this.setup.workers === 0 ? 0 : 1);
+    parts = this.setup.workers;
     pool = new RepeatedWorkerPool(() => new Worker(), this.setup.workers);
+    firstAnswer = false;
 
-    isMovingPlane = false;
+    render = {
+        fractalChanged: true,
+        isMovingPlane: false,
+        fullResTask: null,
+        refreshLoop: null,
+        refreshMs: 5,
+        fullResMs: 500,
+        precisionScrollLimit: 9.0e-16
+    }
 
-    fullResTask = null;
+    padIndex = null
+    padSettings = {
+        deadZone: 0.1,
+        scrollModifier: 20,
+        moveModifier: 15,
+    }
 
     canvas = null;
 
-    firstAnswer = false;
-
     progressListeners = [];
-
-    refreshLoop = null;
 
     init() {
 
@@ -34,19 +42,29 @@ class FractalsRenderer {
             this.padIndex = e.gamepad.index;
         })
 
-        this.refreshLoop = setInterval(() => {
+        window.addEventListener('gamepaddisconnected', (e) => {
+            if (this.padIndex === e.gamepad.index) {
+                this.padIndex = null;
+            }
+        })
+
+        this.render.refreshLoop = setInterval(() => {
             this.processPadEvents()
 
-            if (this.fractalChanged && !this.pool.isOccupied()) {
+            const shouldRender = this.render.fractalChanged &&
+                (this.render.fullResTask == null || !this.pool.isOccupied())
+
+            if (shouldRender) {
+
                 this.loadFrame(false)
                 this.scheduleFullRes()
             }
-        }, 10)
+        }, this.render.refreshMs)
     }
 
     close() {
-        if (this.refreshLoop != null) {
-            clearInterval(this.refreshLoop)
+        if (this.render.refreshLoop != null) {
+            clearInterval(this.render.refreshLoop)
         }
     }
 
@@ -61,15 +79,16 @@ class FractalsRenderer {
                 scaling: fullRes ? 1 : this.setup.scaling,
                 partNum: i,
                 partCount: this.setup.workers,
-                maxIters: fullRes ? this.setup.maxIters : this.setup.maxIters * 0.25
+                maxIters: this.setup.maxIters
             });
         }
 
-        this.fractalChanged = false;
+        this.render.fractalChanged = false;
     }
 
     processPadEvents() {
-        if (this.padIndex == null) {
+
+        if (this.padIndex == null ) {
             return;
         }
 
@@ -78,20 +97,20 @@ class FractalsRenderer {
         let xMove = 0;
         let yMove = 0;
 
-        if (Math.abs(x1) > 0.04) {
-            xMove = x1 * 100;
+        if (Math.abs(x1) > this.padSettings.deadZone) {
+            xMove = x1 * this.padSettings.moveModifier;
         }
 
-        if (Math.abs(y1) > 0.04) {
-            yMove = y1 * 100;
+        if (Math.abs(y1) > this.padSettings.deadZone) {
+            yMove = y1 * this.padSettings.moveModifier;
         }
 
         if (xMove !== 0 || yMove !== 0) {
             this.movePlaneByMouseMovement(-xMove, -yMove)
         }
 
-        if (Math.abs(y2) > 0.02) {
-            this.zoomByWheelDeltaY(y2 * 100)
+        if (Math.abs(y2) > this.padSettings.deadZone) {
+            this.zoomByWheelDeltaY(y2 * this.padSettings.scrollModifier)
         }
     }
 
@@ -107,17 +126,17 @@ class FractalsRenderer {
         })
 
         this.canvas.addEventListener('mousemove', (e) => {
-            if (this.isMovingPlane) {
+            if (this.render.isMovingPlane) {
                 this.movePlaneByMouseMovement(e.movementX, e.movementY);
             }
         });
 
         this.canvas.addEventListener('mousedown', () => {
-            this.isMovingPlane = true;
+            this.render.isMovingPlane = true;
         });
 
         this.canvas.addEventListener('mouseup', () => {
-            this.isMovingPlane = false;
+            this.render.isMovingPlane = false;
         });
     }
 
@@ -125,7 +144,7 @@ class FractalsRenderer {
 
         const xParticle = this.getParticleX();
 
-        if (Math.abs(xParticle) < 9.0e-16 && deltaY < 0) {
+        if (Math.abs(xParticle) < this.render.precisionScrollLimit && deltaY < 0) {
             return
         }
 
@@ -139,13 +158,13 @@ class FractalsRenderer {
         this.setup.plane[2] -= yShrink;
         this.setup.plane[3] += yShrink;
 
-        this.fractalChanged = true
+        this.render.fractalChanged = true
     }
 
     movePlaneByMouseMovement(movementX, movementY) {
 
-        const xMove = this.getParticleX() * movementX;
-        const yMove = this.getParticleY() * movementY;
+        const xMove = this.getParticleX() * movementX * 0.8;
+        const yMove = this.getParticleY() * movementY * 0.8;
 
         this.setup.plane[0] -= xMove;
         this.setup.plane[1] -= xMove;
@@ -153,7 +172,7 @@ class FractalsRenderer {
         this.setup.plane[2] -= yMove;
         this.setup.plane[3] -= yMove;
 
-        this.fractalChanged = true
+        this.render.fractalChanged = true
     }
 
     getParticleX() {
@@ -188,13 +207,14 @@ class FractalsRenderer {
     }
 
     scheduleFullRes() {
-        if (this.fullResTask != null) {
-            clearTimeout(this.fullResTask);
+        if (this.render.fullResTask != null) {
+            clearTimeout(this.render.fullResTask);
         }
 
-        this.fullResTask = setTimeout(() => {
-            this.loadFrame(true)
-        }, 300);
+        this.render.fullResTask = setTimeout(() => {
+            this.loadFrame(true);
+            this.render.fullResTask = null;
+        }, this.render.fullResMs);
     }
 
     getCloserNumber(arr, number) {
@@ -235,7 +255,6 @@ class FractalsRenderer {
             maxIters: iters
         }
     }
-
 
     isFetching() {
         return !this.firstAnswer || this.pool.isOccupied();

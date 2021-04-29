@@ -16,7 +16,7 @@ class MandelbrotSet extends Component {
 
   render() {
     return (
-        <canvas ref="canvas" width={1000} height={800}/>
+        <canvas ref="canvas" width={1200} height={600} />
     )
   }
 }
