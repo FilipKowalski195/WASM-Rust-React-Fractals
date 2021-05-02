@@ -4,10 +4,11 @@ mod color;
 extern crate wasm_bindgen;
 extern crate web_sys;
 extern crate console_error_panic_hook;
+extern crate palette;
 
 use wasm_bindgen::prelude::*;
 use math::{Generator, FractalConfig};
-use color::{GrayscaleTransformation, ColorTransformation};
+use color::{ColorTransformation, HsvBasedColorTransformation};
 use web_sys::window;
 use std::cmp::max;
 
@@ -167,7 +168,7 @@ fn generate_frame_part(config: FramePartConfig, generator: Generator) -> Vec<u8>
 
     let result = gen.generate(&f_conf);
 
-    let trans = GrayscaleTransformation{};
+    let trans = HsvBasedColorTransformation{};
 
     let colored = trans.transform(
         result,

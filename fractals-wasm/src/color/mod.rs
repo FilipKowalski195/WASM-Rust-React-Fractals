@@ -1,5 +1,6 @@
 use math::FractalPoint;
 use wasm_bindgen::UnwrapThrowExt;
+use palette::{Hsv, rgb::Srgb};
 
 pub trait ColorTransformation {
 
@@ -42,47 +43,31 @@ pub trait ColorTransformation {
     }
 }
 
-pub struct GrayscaleTransformation;
+pub struct HsvBasedColorTransformation;
 
-impl ColorTransformation for GrayscaleTransformation {
-    fn determine_color(&self, point: &FractalPoint, max_iters: usize) -> (u8, u8, u8) {
-        let greyscale = ((point.iterations as f64 / max_iters as f64).floor() * 255.0) as u8;
+fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
+    let color_hsv = Hsv::new(h, s, v);
+    let color_rgb = Srgb::from(color_hsv);
 
-        return (greyscale, greyscale, greyscale)
-    }
+    return (
+        (color_rgb.red * 255.0) as u8,
+        (color_rgb.green * 255.0) as u8,
+        (color_rgb.blue * 255.0) as u8
+    )
 }
 
-pub struct ElectricBlue;
+impl ColorTransformation for HsvBasedColorTransformation {
 
-// impl ColorTransformation for ElectricBlue{
-//     fn determine_color(&self, point: &FractalPoint, max_iters: usize) -> (u8, u8, u8) {
-//         for (i = 0; i < 255; i++) {
-//             if (i < 32) {
-//                 r = 0;
-//                 g = 0;
-//                 b = i * 4;
-//             } else if (i < 64) {
-//                 r = (i - 32) * 8;
-//                 g = (i - 32) * 8;
-//                 b = 127 + (i - 32) * 4;
-//             } else if (i < 96) {
-//                 r = 255 - (i - 64) * 8;
-//                 g = 255 - (i - 64) * 8;
-//                 b = 255 - (i - 64) * 4;
-//             } else if (i < 128) {
-//                 r = 0;
-//                 g = 0;
-//                 b = 127 - (i - 96) * 4;
-//             } else if (i < 192) {
-//                 r = 0;
-//                 g = 0;
-//                 b = (i - 128);
-//             } else {
-//                 r = 0;
-//                 g = 0;
-//                 b = 63 - (i - 192);
-//             }
-//             colours[i] = (r << 24) + (g << 16) + (b << 8);
-//         }
-//     }
-// }
+    fn determine_color(&self, point: &FractalPoint, max_iters: usize) -> (u8, u8, u8) {
+        return if point.iterations == max_iters {
+            (0, 0, 0)
+        } else {
+            let iterations = point.iterations << 2;
+            let modifier = iterations as f32 / 1000.0;
+
+            hsv_to_rgb(
+                modifier * 360.0, 1.0, 1.0
+            )
+        }
+    }
+}
