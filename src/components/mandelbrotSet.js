@@ -3,11 +3,26 @@ import FractalsRenderer from "../fractals/FractalsRenderer";
 
 class MandelbrotSet extends Component {
 
-  renderer = new FractalsRenderer();
+  state = {
+    width: 0,
+    height: 0
+  }
+
+  renderer = new FractalsRenderer(
+      window.screen.availWidth / window.screen.availHeight,
+      window.screen.availHeight * 0.9
+  );
 
   componentDidMount() {
+
+    this.setState({
+      width: this.renderer.setup.res[0],
+      height: this.renderer.setup.res[1]
+    })
+
     this.renderer.injectCanvas(this.refs.canvas);
     this.renderer.init();
+
   }
 
   componentWillUnmount() {
@@ -16,7 +31,7 @@ class MandelbrotSet extends Component {
 
   render() {
     return (
-        <canvas ref="canvas" width={1200} height={600} />
+        <canvas ref="canvas" width={this.state.width} height={this.state.height} />
     )
   }
 }

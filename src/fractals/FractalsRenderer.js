@@ -3,14 +3,6 @@ import RepeatedWorkerPool from './worker/repeatedWorkerPool'
 
 class FractalsRenderer {
 
-    setup = this.prepareSetup(
-        [1200, 600],
-        [-3.5, 2.5, -1.5, 1.5],
-        1000
-    );
-
-    parts = this.setup.workers;
-    pool = new RepeatedWorkerPool(() => new Worker(), this.setup.workers);
     firstAnswer = false;
 
     render = {
@@ -20,7 +12,8 @@ class FractalsRenderer {
         refreshLoop: null,
         refreshMs: 5,
         fullResMs: 500,
-        precisionScrollLimit: 9.0e-16
+        precisionScrollLimit: 9.0e-16,
+        zoomSpeedLock: 50,
     }
 
     padIndex = null
@@ -34,9 +27,32 @@ class FractalsRenderer {
 
     progressListeners = [];
 
-    init() {
+    constructor(screenRatio, maxHeight) {
+        const factor = Math.floor(maxHeight / 200);
+        const height = factor * 200
+        const width = Math.floor(height * screenRatio);
+
+        const planeLengthX = 3 * screenRatio;
+
+        const plane = [-planeLengthX * 0.6, planeLengthX * 0.4, -1.5, 1.5];
+
+        this.setup = this.prepareSetup(
+            [width, height],
+            plane,
+            1000,
+            5
+        );
 
         console.log(this.setup)
+
+        const widthScalableFactor = Math.floor(width / this.setup.scaling)
+        this.setup.res[0] = widthScalableFactor * this.setup.scaling
+
+        this.parts = this.setup.workers;
+        this.pool = new RepeatedWorkerPool(() => new Worker(), this.setup.workers);
+    }
+
+    init() {
 
         window.addEventListener('gamepadconnected', (e) => {
             this.padIndex = e.gamepad.index;
@@ -120,6 +136,8 @@ class FractalsRenderer {
 
         this.canvas = canvas;
 
+        this.canvas.style.cursor = "grab"
+
         this.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
             this.zoomByWheelDeltaY(e.deltaY);
@@ -133,14 +151,17 @@ class FractalsRenderer {
 
         this.canvas.addEventListener('mousedown', () => {
             this.render.isMovingPlane = true;
+            this.canvas.style.cursor = "grabbing"
         });
 
         this.canvas.addEventListener('mouseup', () => {
             this.render.isMovingPlane = false;
+            this.canvas.style.cursor = "grab"
         });
     }
 
     zoomByWheelDeltaY(deltaY) {
+        deltaY = deltaY / Math.abs(deltaY) * Math.min(Math.abs(deltaY), this.render.zoomSpeedLock)
 
         const xParticle = this.getParticleX();
 
@@ -189,9 +210,8 @@ class FractalsRenderer {
 
     onPoolAnswer(e) {
 
-        this.firstAnswer = true;
-
         if (!this.pool.isOccupied()) {
+            this.firstAnswer = true;
             this.progressListeners.forEach((listener) => listener(false))
         }
 
@@ -229,7 +249,7 @@ class FractalsRenderer {
         return closer;
     }
 
-    prepareSetup(res, plane, iters) {
+    prepareSetup(res, plane, iters, scalingAim) {
 
         const factors = number => Array
             .from(Array(number + 1), (_, i) => i)
@@ -237,15 +257,15 @@ class FractalsRenderer {
 
         const cores = navigator.hardwareConcurrency;
 
-        const possibleValues = factors(res[1])
+        const possibleWorkers = factors(res[1])
 
-        let workers = this.getCloserNumber(possibleValues, cores)
-        let scaling = this.getCloserNumber(possibleValues, 5)
+        let workers = this.getCloserNumber(possibleWorkers, cores)
 
-        if (res[1] % 200 !== 0) {
-            throw new Error("Resolution must be divisible by 200 to " +
-                "provide high flexibility in workers distribution!");
-        }
+        const possibleScaling = factors(res[1] / workers)
+
+        possibleScaling.shift()
+
+        let scaling = this.getCloserNumber(possibleScaling, scalingAim)
 
         return {
             res: res,
