@@ -1,13 +1,18 @@
 import React, {Component} from "react";
 import FractalsRenderer from "../fractals/FractalsRenderer";
-
-import Accordion from '@material-ui/core/Accordion';
-import AccordionSummary from '@material-ui/core/AccordionSummary';
-import AccordionDetails from '@material-ui/core/AccordionDetails';
-import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import {Slider, MenuItem, Select, LinearProgress, Backdrop, CircularProgress} from '@material-ui/core';
-import {SketchPicker} from 'react-color';
+import {
+    Slider,
+    MenuItem, 
+    Select, 
+    LinearProgress, 
+    CircularProgress, 
+    Typography, 
+    AccordionDetails, 
+    AccordionSummary, 
+    Accordion
+} from '@material-ui/core';
+import { SketchPicker } from 'react-color';
 
 class Fractal extends Component {
 
@@ -115,8 +120,6 @@ class Fractal extends Component {
                     <Accordion>
                         <AccordionSummary
                             expandIcon={<ExpandMoreIcon/>}
-                            aria-controls="panel1a-content"
-                            id="panel1a-header"
                         >
                             <Typography>Choose Fractals to show</Typography>
                         </AccordionSummary>
@@ -126,8 +129,8 @@ class Fractal extends Component {
                                     value={this.state.fractalNo}
                                     onChange={this.handleFractalChange}
                                 >
-                                    <MenuItem value={this.state.fractalNo}>Zbiór Mandelbrota</MenuItem>
-                                    <MenuItem value={this.state.fractalNo}>Zbiory Julii</MenuItem>
+                                    <MenuItem value={0}>Zbiór Mandelbrota</MenuItem>
+                                    <MenuItem value={1}>Zbiory Julii</MenuItem>
                                 </Select>
                             </Typography>
                         </AccordionDetails>
@@ -135,8 +138,6 @@ class Fractal extends Component {
                     <Accordion>
                         <AccordionSummary
                             expandIcon={<ExpandMoreIcon/>}
-                            aria-controls="panel1a-content"
-                            id="panel1a-header"
                         >
                             <Typography>Slider option placeholder</Typography>
                         </AccordionSummary>
