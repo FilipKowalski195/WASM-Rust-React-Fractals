@@ -1,4 +1,4 @@
-import Worker from './worker/mandelbrot.worker'
+import Worker from './worker/fractals.worker'
 import RepeatedWorkerPool from './worker/repeatedWorkerPool'
 
 class FractalsRenderer {
@@ -95,7 +95,11 @@ class FractalsRenderer {
                 scaling: fullRes ? 1 : this.setup.scaling,
                 partNum: i,
                 partCount: this.setup.workers,
-                maxIters: this.setup.maxIters
+                maxIters: this.setup.maxIters,
+                fractal: {
+                    type: "Julia",
+                    point: [-0.1, 0.65]
+                }
             });
         }
 

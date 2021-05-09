@@ -121,6 +121,33 @@ impl FramePartConfig {
 }
 
 #[wasm_bindgen]
+pub fn generate_frame_part_julia(
+    resolution: Vec<usize>,
+    plane: Vec<f64>,
+    scaling: usize,
+    part_num: usize,
+    part_count: usize,
+    max_iters: usize,
+    p_point: Vec<f64>
+) -> Vec<u8> {
+    let conf = FramePartConfig {
+        res: Resolution { width: resolution[0], height: resolution[1] },
+        plane: ComplexPlaneRange {
+            start_re: plane[0],
+            end_re: plane[1],
+            start_im: plane[2],
+            end_im: plane[3],
+        },
+        scaling,
+        part_num,
+        part_count,
+        max_iters,
+    };
+
+    return generate_frame_part(conf, Generator::JULIA(p_point[0], p_point[1]))
+}
+
+#[wasm_bindgen]
 pub fn generate_frame_part_mandelbrot(
     resolution: Vec<usize>,
     plane: Vec<f64>,
@@ -163,7 +190,7 @@ fn generate_frame_part(config: FramePartConfig, generator: Generator) -> Vec<u8>
         end_im: frame_plane.end_im,
         im_steps: config.frame_height(),
 
-        max_iters: 1000,
+        max_iters: config.max_iters,
     };
 
     let result = gen.generate(&f_conf);
