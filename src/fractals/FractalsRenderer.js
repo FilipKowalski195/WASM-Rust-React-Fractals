@@ -28,25 +28,30 @@ class FractalsRenderer {
     progressListeners = [];
 
     constructor(screenRatio, maxHeight) {
-        const factor = Math.floor(maxHeight / 200);
-        const height = factor * 200
-        const width = Math.floor(height * screenRatio);
+
+        const scaling = 5;
+        const workers = navigator.hardwareConcurrency;
+
+        const factor = scaling * workers;
+
+        const height = Math.floor(maxHeight / factor) * factor;
+        let width = height * screenRatio;
+
+        width = Math.floor(width / scaling) * scaling;
 
         const planeLengthX = 3 * screenRatio;
 
         const plane = [-planeLengthX * 0.6, planeLengthX * 0.4, -1.5, 1.5];
 
-        this.setup = this.prepareSetup(
-            [width, height],
-            plane,
-            1000,
-            5
-        );
+        this.setup = {
+            res: [width, height],
+            plane: plane,
+            scaling: scaling,
+            workers: workers,
+            maxIters: 1000
+        }
 
         console.log(this.setup)
-
-        const widthScalableFactor = Math.floor(width / this.setup.scaling)
-        this.setup.res[0] = widthScalableFactor * this.setup.scaling
 
         this.parts = this.setup.workers;
         this.pool = new RepeatedWorkerPool(() => new Worker(), this.setup.workers);
@@ -251,33 +256,6 @@ class FractalsRenderer {
         }
 
         return closer;
-    }
-
-    prepareSetup(res, plane, iters, scalingAim) {
-
-        const factors = number => Array
-            .from(Array(number + 1), (_, i) => i)
-            .filter(i => number % i === 0)
-
-        const cores = navigator.hardwareConcurrency;
-
-        const possibleWorkers = factors(res[1])
-
-        let workers = this.getCloserNumber(possibleWorkers, cores)
-
-        const possibleScaling = factors(res[1] / workers)
-
-        possibleScaling.shift()
-
-        let scaling = this.getCloserNumber(possibleScaling, scalingAim)
-
-        return {
-            res: res,
-            plane: plane,
-            scaling: scaling,
-            workers: workers,
-            maxIters: iters
-        }
     }
 
     isFetching() {
