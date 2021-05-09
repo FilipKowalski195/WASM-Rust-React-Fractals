@@ -32,7 +32,7 @@ class Fractal extends Component {
 
     renderer = new FractalsRenderer(
         window.screen.availWidth / window.screen.availHeight,
-        window.screen.availHeight * 0.9
+        window.screen.availHeight * 0.83
     );
 
     componentDidMount() {
