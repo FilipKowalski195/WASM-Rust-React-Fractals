@@ -8,9 +8,7 @@ extern crate palette;
 
 use wasm_bindgen::prelude::*;
 use math::{Generator, FractalConfig};
-use color::{ColorTransformation, HsvBasedColorTransformation};
-use web_sys::window;
-use std::cmp::max;
+use color::{ColorTransformation, HsvBasedColorTransformation, SmoothColorTransformation};
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -195,7 +193,7 @@ fn generate_frame_part(config: FramePartConfig, generator: Generator) -> Vec<u8>
 
     let result = gen.generate(&f_conf);
 
-    let trans = HsvBasedColorTransformation{};
+    let trans = SmoothColorTransformation { base: HsvBasedColorTransformation {} };
 
     let colored = trans.transform(
         result,

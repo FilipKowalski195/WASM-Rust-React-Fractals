@@ -1,10 +1,13 @@
 use math::FractalPoint;
-use wasm_bindgen::UnwrapThrowExt;
 use palette::{Hsv, rgb::Srgb};
 
 pub trait ColorTransformation {
 
-    fn determine_color(&self, point: &FractalPoint, max_iters: usize) -> (u8, u8, u8);
+    fn determine_color_hsv(&self, point: &FractalPoint, max_iters: usize) -> (f32, f32, f32);
+
+    fn determine_color(&self, point: &FractalPoint, max_iters: usize) -> (u8, u8, u8) {
+        return hsv_to_rgb(self.determine_color_hsv(point, max_iters));
+    }
 
     fn transform(
         &self,
@@ -45,7 +48,8 @@ pub trait ColorTransformation {
 
 pub struct HsvBasedColorTransformation;
 
-fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
+fn hsv_to_rgb(hsv: (f32, f32, f32)) -> (u8, u8, u8) {
+    let (h, s, v) = hsv;
     let color_hsv = Hsv::new(h, s, v);
     let color_rgb = Srgb::from(color_hsv);
 
@@ -58,16 +62,71 @@ fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
 
 impl ColorTransformation for HsvBasedColorTransformation {
 
-    fn determine_color(&self, point: &FractalPoint, max_iters: usize) -> (u8, u8, u8) {
+    fn determine_color_hsv(&self, point: &FractalPoint, max_iters: usize) -> (f32, f32, f32) {
+
         return if point.iterations == max_iters {
-            (0, 0, 0)
+            (0.0, 0.0, 0.0)
         } else {
             let iterations = point.iterations << 2;
             let modifier = iterations as f32 / 1000.0;
 
-            hsv_to_rgb(
-                modifier * 360.0, 1.0, 1.0
-            )
+            return (modifier * 360.0, 1.0, 1.0)
         }
+    }
+
+
+    fn determine_color(&self, point: &FractalPoint, max_iters: usize) -> (u8, u8, u8) {
+        return hsv_to_rgb(self.determine_color_hsv(point, max_iters))
+    }
+}
+
+pub struct SmoothColorTransformation<T : ColorTransformation> {
+    pub base: T
+}
+
+#[inline(always)]
+fn in_between(a: f32, b: f32, factor: f32) -> f32 {
+    return a + (b - a) * factor;
+}
+
+#[inline(always)]
+fn interpolate(color: (f32, f32, f32), color2: (f32, f32, f32), value: f32) -> (f32, f32, f32) {
+    return (
+        in_between(color.0, color2.0, value),
+        in_between(color.1, color2.1, value),
+        in_between(color.2, color2.2, value)
+        )
+}
+
+impl<T : ColorTransformation> ColorTransformation for SmoothColorTransformation<T> {
+    fn determine_color_hsv(&self, point: &FractalPoint, max_iters: usize) -> (f32, f32, f32) {
+
+        if point.iterations >= max_iters {
+            return self.base.determine_color_hsv(point, max_iters);
+        }
+
+        let log_zn = ((point.re * point.re + point.im * point.im).ln() / 2.0) as f32;
+        let log_2 = 2.0_f32.ln();
+        let nu = (log_zn / log_2).ln() / log_2;
+        let iter = (point.iterations as f32) + 1.0 - nu;
+
+        let new_iters = iter.floor();
+
+        let point1 = FractalPoint {
+            re: point.re,
+            im: point.im,
+            iterations: new_iters as usize
+        };
+
+        let point2 = FractalPoint {
+            re: point.re,
+            im: point.im,
+            iterations: new_iters as usize + 1
+        };
+
+        let color1 = self.base.determine_color_hsv(&point1, max_iters);
+        let color2 = self.base.determine_color_hsv(&point2, max_iters);
+
+        return interpolate(color1, color2, iter % 1.0);
     }
 }
