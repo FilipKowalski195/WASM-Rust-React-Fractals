@@ -3,13 +3,13 @@ import FractalsRenderer from "../fractals/FractalsRenderer";
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import {
     Slider,
-    MenuItem, 
-    Select, 
-    LinearProgress, 
-    CircularProgress, 
-    Typography, 
-    AccordionDetails, 
-    AccordionSummary, 
+    MenuItem,
+    Select,
+    LinearProgress,
+    CircularProgress,
+    Typography,
+    AccordionDetails,
+    AccordionSummary,
     Accordion
 } from '@material-ui/core';
 import { SketchPicker } from 'react-color';
@@ -38,8 +38,8 @@ class Fractal extends Component {
     componentDidMount() {
 
         this.setState({
-            width: this.renderer.setup.res[0],
-            height: this.renderer.setup.res[1],
+            width: this.renderer.getWidth(),
+            height: this.renderer.getHeight(),
         })
 
         this.renderer.injectCanvas(this.refs.canvas);
@@ -64,7 +64,6 @@ class Fractal extends Component {
                 }, 100);
             }
         })
-
     }
 
     componentWillUnmount() {

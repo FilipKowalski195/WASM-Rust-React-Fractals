@@ -1,45 +1,48 @@
 const wasm = import('fractals-wasm')
 
 onmessage = function (e) {
-    wasm.then(({generate_frame_part_mandelbrot, generate_frame_part_julia}) => {
-        const scaling = e.data.scaling;
-        const partNum = e.data.partNum;
-        const partCount = e.data.partCount;
-        const maxIters = e.data.maxIters;
-        const fullHeight = e.data.res[1];
-        const type = e.data.fractal.type;
-        const point = e.data.fractal.point;
+    wasm.then(({generate_frame_part,
+                   FramePartConfig,
+                   Resolution,
+                   ComplexPlaneRange,
+                   GeneratorConfig,
+                   ColorConfig,
+                   ColorTransMode}) => {
 
-        const partHeight = Math.floor(fullHeight / partCount);
+        const conf = FramePartConfig.new(
+            Resolution.new(e.data.res[0], e.data.res[1]),
+            ComplexPlaneRange.new(
+                e.data.plane[0],
+                e.data.plane[1],
+                e.data.plane[2],
+                e.data.plane[3]
+            ),
+            e.data.scaling,
+            e.data.partNum,
+            e.data.partCount,
+            e.data.maxIters
+        )
+        const frac = e.data.fractal
+        const gen = frac.type === "Mandelbrot"
+            ? GeneratorConfig.mandelbrot()
+            : GeneratorConfig.julia_set(frac.point[0], frac.point[1])
 
-        let data;
+        const color = ColorConfig.new(
+            e.data.color.h,
+            e.data.color.s,
+            e.data.color.v,
+            ColorTransMode[e.data.color.mode],
+            e.data.color.smooth
+        )
 
-        if(type === "Mandelbrot") {
-            data = generate_frame_part_mandelbrot(
-                Uint32Array.from(e.data.res),
-                Float64Array.from(e.data.plane),
-                scaling,
-                partNum,
-                partCount,
-                maxIters
-            );
-        } else {
-            data = generate_frame_part_julia(
-                Uint32Array.from(e.data.res),
-                Float64Array.from(e.data.plane),
-                scaling,
-                partNum,
-                partCount,
-                maxIters,
-                Float64Array.from(point)
-            );
-        }
+        const partHeight = Math.floor(conf.res.height / conf.part_count);
 
+        let data = generate_frame_part(conf, gen, color);
 
         postMessage({
             data: data,
             x: 0,
-            y:  partNum * partHeight,
+            y:  e.data.partNum * partHeight,
             width: e.data.res[0],
             height: partHeight
         });

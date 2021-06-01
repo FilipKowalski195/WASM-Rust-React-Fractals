@@ -46,7 +46,9 @@ pub trait ColorTransformation {
     }
 }
 
-pub struct HsvBasedColorTransformation;
+pub enum HsvTransMode {
+    Hue, Saturation, Value
+}
 
 fn hsv_to_rgb(hsv: (f32, f32, f32)) -> (u8, u8, u8) {
     let (h, s, v) = hsv;
@@ -60,6 +62,36 @@ fn hsv_to_rgb(hsv: (f32, f32, f32)) -> (u8, u8, u8) {
     )
 }
 
+pub struct HsvBasedColorTransformation {
+    pub h_base: f32,
+    pub s_base: f32,
+    pub v_base: f32,
+    pub mode: HsvTransMode
+}
+
+impl HsvBasedColorTransformation {
+    fn hue_based(&self, point: &FractalPoint, max_iters: usize) -> (f32, f32, f32) {
+        let iterations = point.iterations << 2;
+        let modifier = iterations as f32 / 1000.0;
+
+        return (modifier * self.h_base, self.s_base, self.v_base)
+    }
+
+    fn saturation_based(&self, point: &FractalPoint, max_iters: usize) -> (f32, f32, f32) {
+        let iterations = point.iterations << 2;
+        let modifier = iterations as f32 / 1000.0;
+
+        return (self.h_base, modifier * self.s_base, self.v_base)
+    }
+
+    fn value_based(&self, point: &FractalPoint, max_iters: usize) -> (f32, f32, f32) {
+        let iterations = point.iterations << 2;
+        let modifier = iterations as f32 / 1000.0;
+
+        return (self.h_base, self.s_base, modifier * self.v_base)
+    }
+}
+
 impl ColorTransformation for HsvBasedColorTransformation {
 
     fn determine_color_hsv(&self, point: &FractalPoint, max_iters: usize) -> (f32, f32, f32) {
@@ -67,10 +99,11 @@ impl ColorTransformation for HsvBasedColorTransformation {
         return if point.iterations == max_iters {
             (0.0, 0.0, 0.0)
         } else {
-            let iterations = point.iterations << 2;
-            let modifier = iterations as f32 / 1000.0;
-
-            return (modifier * 360.0, 1.0, 1.0)
+            match self.mode {
+                HsvTransMode::Hue => self.hue_based(point, max_iters),
+                HsvTransMode::Saturation => self.saturation_based(point, max_iters),
+                HsvTransMode::Value => self.value_based(point, max_iters)
+            }
         }
     }
 
@@ -95,7 +128,7 @@ fn interpolate(color: (f32, f32, f32), color2: (f32, f32, f32), value: f32) -> (
         in_between(color.0, color2.0, value),
         in_between(color.1, color2.1, value),
         in_between(color.2, color2.2, value)
-        )
+    )
 }
 
 impl<T : ColorTransformation> ColorTransformation for SmoothColorTransformation<T> {
