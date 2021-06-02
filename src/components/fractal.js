@@ -64,6 +64,8 @@ class Fractal extends Component {
                 }, 100);
             }
         })
+
+        this.renderer.addOnNewWorkerStats((stats) => console.log(stats))
     }
 
     componentWillUnmount() {

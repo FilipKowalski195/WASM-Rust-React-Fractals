@@ -9,15 +9,16 @@ class RepeatedWorkerPool {
 
         for (let i = 0; i < count; i++) {
             const worker = workerSupplier();
-            worker.onmessage = (e) => this.onMessageHelper(e);
+            worker.onmessage = (e) => this.onMessageHelper(e, i);
             this.workers.push(worker);
         }
 
     }
 
-    onMessageHelper(event) {
+    onMessageHelper(event, i) {
         this.todo--;
         if (this.onEachMessage != null) {
+            event.data.workerId = i
             this.onEachMessage(event)
         }
     }

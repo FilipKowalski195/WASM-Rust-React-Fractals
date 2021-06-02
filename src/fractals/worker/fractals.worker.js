@@ -9,6 +9,8 @@ onmessage = function (e) {
                    ColorConfig,
                    ColorTransMode}) => {
 
+        const startTime = performance.now();
+
         const conf = FramePartConfig.new(
             Resolution.new(e.data.res[0], e.data.res[1]),
             ComplexPlaneRange.new(
@@ -44,7 +46,9 @@ onmessage = function (e) {
             x: 0,
             y:  e.data.partNum * partHeight,
             width: e.data.res[0],
-            height: partHeight
+            height: partHeight,
+            isFullRes: e.data.isFullRes,
+            time: performance.now() - startTime
         });
     })
 }

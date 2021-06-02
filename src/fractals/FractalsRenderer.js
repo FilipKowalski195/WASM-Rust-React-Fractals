@@ -26,6 +26,8 @@ class FractalsRenderer {
     _canvas = null;
 
     _progressListeners = [];
+    stats = []
+    _statsListeners = []
 
     setup = {
         maxIters: 1000,
@@ -70,6 +72,14 @@ class FractalsRenderer {
 
         this.parts = this._setup.workers;
         this.pool = new RepeatedWorkerPool(() => new Worker(), this._setup.workers);
+
+        for (let i = 0; i < this._setup.workers; i++) {
+            this.stats.push({
+                id: i,
+                scaledMs: 0,
+                fullResMs: 0
+            })
+        }
     }
 
     init() {
@@ -125,6 +135,7 @@ class FractalsRenderer {
                 res: this._setup.res,
                 plane: this._setup.plane,
                 scaling: fullRes ? 1 : this._setup.scaling,
+                isFullRes: fullRes,
                 partNum: i,
                 partCount: this._setup.workers,
                 maxIters: this.setup.maxIters,
@@ -252,6 +263,14 @@ class FractalsRenderer {
             this._progressListeners.forEach((listener) => listener(false))
         }
 
+        if (e.data.isFullRes) {
+            this.stats[e.data.workerId].fullResMs = e.data.time
+        } else {
+            this.stats[e.data.workerId].scaledMs = e.data.time
+        }
+
+        this._statsListeners.forEach((listener) => listener(this.stats))
+
         this.updateCanvas(e.data.data, e.data.width, e.data.height, e.data.x, e.data.y);
     }
 
@@ -294,8 +313,8 @@ class FractalsRenderer {
         this._progressListeners.push(listener);
     }
 
-    removeOnFetchingProgressChanged(listener) {
-        this._progressListeners.push(listener);
+    addOnNewWorkerStats(listener) {
+        this._statsListeners.push(listener)
     }
 }
 
