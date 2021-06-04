@@ -10,9 +10,10 @@ import {
     Typography,
     AccordionDetails,
     AccordionSummary,
-    Accordion
+    Accordion, ListItem, ListItemAvatar, Avatar, ListItemText, List
 } from '@material-ui/core';
 import { SketchPicker } from 'react-color';
+import MemoryIcon from '@material-ui/icons/Memory';
 
 class Fractal extends Component {
 
@@ -65,7 +66,15 @@ class Fractal extends Component {
             }
         })
 
-        this.renderer.addOnNewWorkerStats((stats) => console.log(stats))
+        this.renderer.addOnNewWorkerStats((stats) => {
+            this.setState({
+                ...this.state,
+                stats
+            })
+        })
+
+
+
     }
 
     componentWillUnmount() {
@@ -77,13 +86,24 @@ class Fractal extends Component {
             ...this.state,
             settingOne: newValue
         });
+
     };
 
     handleFractalChange = (event) => {
+
         this.setState({
             ...this.state,
             fractalNo: event.target.value,
         })
+
+        this.renderer.setup.fractal = {
+            ...this.renderer.setup.fractal,
+            type: this.state.fractalNo === 0 ? 'Julia' : 'Mandelbrot'
+        }
+
+        this.renderer.resetPlane()
+
+        this.renderer.invalidate()
     };
 
     handleChangeComplete = () => {
@@ -130,8 +150,8 @@ class Fractal extends Component {
                                     value={this.state.fractalNo}
                                     onChange={this.handleFractalChange}
                                 >
-                                    <MenuItem value={0}>Zbiór Mandelbrota</MenuItem>
-                                    <MenuItem value={1}>Zbiory Julii</MenuItem>
+                                    <MenuItem value={0}>Mandelbrot set</MenuItem>
+                                    <MenuItem value={1}>Julia Set</MenuItem>
                                 </Select>
                             </Typography>
                         </AccordionDetails>
@@ -140,13 +160,27 @@ class Fractal extends Component {
                         <AccordionSummary
                             expandIcon={<ExpandMoreIcon/>}
                         >
-                            <Typography>Slider option placeholder</Typography>
+                            <Typography>Statistics</Typography>
                         </AccordionSummary>
                         <AccordionDetails>
-                            <Typography>
-                                This is basic explanation of how this setting work. XXXXXXXXXXXXXXX
-                                <Slider value={this.state.settingOne} onChange={this.handleChange}/>
-                            </Typography>
+                            <List>
+                                {this.state.stats?.map((it) => {
+                                    return (
+
+                                            <ListItem>
+                                                <ListItemAvatar>
+                                                    <Avatar>
+                                                        <MemoryIcon />
+                                                    </Avatar>
+                                                </ListItemAvatar>
+                                                <ListItemText
+                                                    primary={`Thread ${it.id}`}
+                                                    secondary={`Preview time ${parseInt(it.scaledMs)} full time: ${parseInt(it.fullResMs)}`} />
+                                            </ListItem>
+                                    )
+                                })}
+                            </List>
+
                         </AccordionDetails>
                     </Accordion>
                     <Accordion>

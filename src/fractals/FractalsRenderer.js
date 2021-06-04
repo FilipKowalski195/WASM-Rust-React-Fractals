@@ -16,6 +16,9 @@ class FractalsRenderer {
         zoomSpeedLock: 50,
     }
 
+    _timeInterval = 200
+    _lastUpdate = 0
+
     _padIndex = null
     _padSettings = {
         deadZone: 0.1,
@@ -41,8 +44,12 @@ class FractalsRenderer {
         },
         fractal: {
             type: "Mandelbrot",
-            point: [0.0, 0.0]
+            point: [0.285, 0.01]
         }
+    }
+
+    resetPlane() {
+        this._setup.plane = { ...this.basePlane }
     }
 
     constructor(screenRatio, maxHeight) {
@@ -68,7 +75,7 @@ class FractalsRenderer {
             workers: workers
         }
 
-        console.log(this._setup)
+        this.basePlane = { ...plane }
 
         this.parts = this._setup.workers;
         this.pool = new RepeatedWorkerPool(() => new Worker(), this._setup.workers);
@@ -263,6 +270,12 @@ class FractalsRenderer {
             this._progressListeners.forEach((listener) => listener(false))
         }
 
+        this.updateCanvas(e.data.data, e.data.width, e.data.height, e.data.x, e.data.y);
+
+        if (this._lastUpdate !== 0 && performance.now() - this._lastUpdate < this._timeInterval) return
+
+        this._lastUpdate = performance.now()
+
         if (e.data.isFullRes) {
             this.stats[e.data.workerId].fullResMs = e.data.time
         } else {
@@ -271,7 +284,7 @@ class FractalsRenderer {
 
         this._statsListeners.forEach((listener) => listener(this.stats))
 
-        this.updateCanvas(e.data.data, e.data.width, e.data.height, e.data.x, e.data.y);
+
     }
 
     updateCanvas(data, width, height, x, y) {
