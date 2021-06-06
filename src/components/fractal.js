@@ -10,7 +10,7 @@ import {
     Typography,
     AccordionDetails,
     AccordionSummary,
-    Accordion, ListItem, ListItemAvatar, Avatar, ListItemText, List
+    Accordion, ListItem, ListItemAvatar, Avatar, ListItemText, List, Button
 } from '@material-ui/core';
 import { SketchPicker } from 'react-color';
 import MemoryIcon from '@material-ui/icons/Memory';
@@ -114,8 +114,32 @@ class Fractal extends Component {
         this.setState({...this.state, color: color.hex});
     };
 
-    render() {
+    handleFractalColorChange = () => {
+        const [h, s, v] = this.rgb2hsv(this.hexToRgb(this.state.finalColor))
+        this.renderer.setup.color.h = h
+        this.renderer.setup.color.s = s
+        this.renderer.setup.color.v = v
 
+        this.renderer.invalidate()
+
+    }
+
+    hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    rgb2hsv = ({ r, g, b }) => {
+        let v=Math.max(r,g,b), c=v-Math.min(r,g,b);
+        let h= c && ((v==r) ? (g-b)/c : ((v==g) ? 2+(b-r)/c : 4+(r-g)/c));
+        return [60*(h<0?h+6:h), v&&c/v, v];
+    }
+
+    render() {
 
         return (
             <div style={{
@@ -195,6 +219,9 @@ class Fractal extends Component {
                                 onChange={this.handleColorChange}
                                 onChangeComplete={this.handleChangeComplete}
                             />
+                            <Button
+                                onClick={this.handleFractalColorChange}
+                            />
                         </AccordionDetails>
                     </Accordion>
                 </div>
@@ -203,6 +230,8 @@ class Fractal extends Component {
 
         )
     }
+
+
 }
 
 export default Fractal;
