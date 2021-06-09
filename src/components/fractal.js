@@ -1,19 +1,26 @@
-import React, {Component} from "react";
+import React, { Component } from "react";
 import FractalsRenderer from "../fractals/FractalsRenderer";
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import {
-    Slider,
-    MenuItem,
-    Select,
-    LinearProgress,
-    CircularProgress,
-    Typography,
+    Accordion,
     AccordionDetails,
     AccordionSummary,
-    Accordion, ListItem, ListItemAvatar, Avatar, ListItemText, List, Button
+    Avatar,
+    Button,
+    CircularProgress,
+    Collapse,
+    LinearProgress,
+    List,
+    ListItem,
+    ListItemAvatar,
+    ListItemText,
+    MenuItem,
+    Select, TextField,
+    Typography
 } from '@material-ui/core';
 import { SketchPicker } from 'react-color';
 import MemoryIcon from '@material-ui/icons/Memory';
+import { hex2Hsv, hsv2Hex } from 'colorsys'
 
 class Fractal extends Component {
 
@@ -27,6 +34,9 @@ class Fractal extends Component {
         loading: true,
         firstLoading: true,
         visible: false,
+        mode: 'Value',
+        juliaRPoint: 0.285,
+        juliaIPoint: 0.1
     }
 
     progressTimeoutId = null;
@@ -37,10 +47,11 @@ class Fractal extends Component {
     );
 
     componentDidMount() {
-
+        const { h, s, v } = this.renderer.setup.color
         this.setState({
             width: this.renderer.getWidth(),
             height: this.renderer.getHeight(),
+            color: hsv2Hex({ h, s, v })
         })
 
         this.renderer.injectCanvas(this.refs.canvas);
@@ -58,12 +69,13 @@ class Fractal extends Component {
             clearTimeout(this.progressTimeoutId)
 
             if (progress) {
-                this.setState({...this.state, loading: true})
+                this.setState({ ...this.state, loading: true })
             } else {
                 this.progressTimeoutId = setTimeout(() => {
-                    this.setState({...this.state, loading: false})
+                    this.setState({ ...this.state, loading: false })
                 }, 100);
             }
+
         })
 
         this.renderer.addOnNewWorkerStats((stats) => {
@@ -73,21 +85,11 @@ class Fractal extends Component {
             })
         })
 
-
-
     }
 
     componentWillUnmount() {
         this.renderer.close()
     }
-
-    handleChange = (event, newValue) => {
-        this.setState({
-            ...this.state,
-            settingOne: newValue
-        });
-
-    };
 
     handleFractalChange = (event) => {
 
@@ -104,39 +106,46 @@ class Fractal extends Component {
         this.renderer.resetPlane()
 
         this.renderer.invalidate()
+
     };
 
     handleChangeComplete = () => {
-        this.setState({...this.state, finalColor: this.state.color});
+        this.setState({ ...this.state, finalColor: this.state.color });
     };
 
     handleColorChange = (color) => {
-        this.setState({...this.state, color: color.hex});
+        this.setState({ ...this.state, color: color.hex });
     };
 
     handleFractalColorChange = () => {
-        const [h, s, v] = this.rgb2hsv(this.hexToRgb(this.state.finalColor))
-        this.renderer.setup.color.h = h
-        this.renderer.setup.color.s = s
-        this.renderer.setup.color.v = v
 
+        const { h, s, v } = hex2Hsv(this.state.finalColor)
+        this.renderer.setup.color.h = h
+        this.renderer.setup.color.s = s / 100
+        this.renderer.setup.color.v = v / 100
+
+        this.renderer.setup.color.mode = this.state.mode
+
+        console.log(this.renderer.setup.color)
         this.renderer.invalidate()
 
     }
 
-    hexToRgb = (hex) => {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16)
-        } : null;
+    handleChangeMode = (event) => {
+        this.setState({ ...this.state, mode: event.target.value })
     }
 
-    rgb2hsv = ({ r, g, b }) => {
-        let v=Math.max(r,g,b), c=v-Math.min(r,g,b);
-        let h= c && ((v==r) ? (g-b)/c : ((v==g) ? 2+(b-r)/c : 4+(r-g)/c));
-        return [60*(h<0?h+6:h), v&&c/v, v];
+    handleRChange = event => {
+        this.setState({...this.state, juliaRPoint: event.target.value})
+    }
+
+    handleIChange = event => {
+        this.setState({...this.state, juliaIPoint: event.target.value})
+    }
+
+    handlePointChange = () => {
+        this.renderer.setup.fractal.point = [this.state.juliaRPoint, this.state.juliaIPoint]
+        this.renderer.invalidate()
     }
 
     render() {
@@ -149,16 +158,17 @@ class Fractal extends Component {
                 alignItems: 'flex-start',
             }}>
                 <div>
-                    <div style={{border: '1px solid black'}}>
-                        <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                    <div style={{ border: '1px solid black' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                             {this.state.firstLoading ?
-                                <CircularProgress color="inherit" style={{position: 'absolute'}}/> : ''}
-                            <canvas ref="canvas" style={{visibility: this.state.visible ? 'visible' : 'hidden'}}
+                                <CircularProgress color="inherit" style={{ position: 'absolute' }}/> : ''}
+                            <canvas ref="canvas" style={{ visibility: this.state.visible ? 'visible' : 'hidden' }}
                                     width={this.state.width} height={this.state.height}/>
                         </div>
                     </div>
 
-                    {(this.state.loading && !this.state.firstLoading) ? <LinearProgress/> : ''}
+                    {(
+                        this.state.loading && !this.state.firstLoading) ? <LinearProgress/> : ''}
                 </div>
 
                 <div>
@@ -177,6 +187,25 @@ class Fractal extends Component {
                                     <MenuItem value={0}>Mandelbrot set</MenuItem>
                                     <MenuItem value={1}>Julia Set</MenuItem>
                                 </Select>
+
+                                <Collapse in={this.state.fractalNo}>
+                                    <TextField
+                                        id="standard-number"
+                                        label="Number"
+                                        type="number"
+                                        value={this.state.juliaRPoint}
+                                        onChange={this.handleRChange}
+                                    />
+                                    <TextField
+                                        id="standard-number"
+                                        label="Number"
+                                        type="number"
+                                        value={this.state.juliaIPoint}
+                                        onChange={this.handleIChange}
+                                    />
+                                        <Button onClick={this.handlePointChange} >Change point</Button>
+                                </Collapse>
+
                             </Typography>
                         </AccordionDetails>
                     </Accordion>
@@ -191,16 +220,16 @@ class Fractal extends Component {
                                 {this.state.stats?.map((it) => {
                                     return (
 
-                                            <ListItem>
-                                                <ListItemAvatar>
-                                                    <Avatar>
-                                                        <MemoryIcon />
-                                                    </Avatar>
-                                                </ListItemAvatar>
-                                                <ListItemText
-                                                    primary={`Thread ${it.id}`}
-                                                    secondary={`Preview time ${parseInt(it.scaledMs)} full time: ${parseInt(it.fullResMs)}`} />
-                                            </ListItem>
+                                        <ListItem>
+                                            <ListItemAvatar>
+                                                <Avatar>
+                                                    <MemoryIcon/>
+                                                </Avatar>
+                                            </ListItemAvatar>
+                                            <ListItemText
+                                                primary={`Thread ${it.id}`}
+                                                secondary={`Preview time ${parseInt(it.scaledMs)} full time: ${parseInt(it.fullResMs)}`}/>
+                                        </ListItem>
                                     )
                                 })}
                             </List>
@@ -213,16 +242,40 @@ class Fractal extends Component {
                         >
                             <Typography>Color-picker placeholder</Typography>
                         </AccordionSummary>
-                        <AccordionDetails>
+                        <AccordionDetails style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexFlow: 'column wrap',
+
+                        }}>
                             <SketchPicker
+                                style={{ margin: '10px' }}
                                 color={this.state.color}
                                 onChange={this.handleColorChange}
                                 onChangeComplete={this.handleChangeComplete}
                             />
+                            <Select
+                                style={{ margin: '10px' }}
+                                labelId="demo-simple-select-label"
+                                id="demo-simple-select"
+                                value={this.state.mode}
+                                onChange={this.handleChangeMode}
+                            >
+                                <MenuItem value={'Value'}>Value</MenuItem>
+                                <MenuItem value={'Hue'}>Hue</MenuItem>
+                                <MenuItem value={'Saturation'}>Saturation</MenuItem>
+                            </Select>
                             <Button
+                                style={{ margin: '10px' }}
+                                variant='outlined'
+                                color='primary'
                                 onClick={this.handleFractalColorChange}
-                            />
+                            >
+                                Change color!
+                            </Button>
                         </AccordionDetails>
+
                     </Accordion>
                 </div>
 
@@ -230,7 +283,6 @@ class Fractal extends Component {
 
         )
     }
-
 
 }
 
