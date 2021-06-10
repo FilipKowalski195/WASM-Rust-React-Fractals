@@ -30,11 +30,10 @@ class Fractal extends Component {
         settingOne: 50,
         fractalNo: 0,
         color: '#ff0000',
-        finalColor: '#ff0000',
         loading: true,
         firstLoading: true,
         visible: false,
-        mode: 'Value',
+        mode: 'Hue',
         juliaRPoint: 0.285,
         juliaIPoint: 0.1
     }
@@ -51,7 +50,7 @@ class Fractal extends Component {
         this.setState({
             width: this.renderer.getWidth(),
             height: this.renderer.getHeight(),
-            color: hsv2Hex({ h, s, v })
+            color: hsv2Hex({ h, s: s * 100, v: v * 100 })
         })
 
         this.renderer.injectCanvas(this.refs.canvas);
@@ -109,30 +108,20 @@ class Fractal extends Component {
 
     };
 
-    handleChangeComplete = () => {
-        this.setState({ ...this.state, finalColor: this.state.color });
-    };
-
     handleColorChange = (color) => {
         this.setState({ ...this.state, color: color.hex });
-    };
-
-    handleFractalColorChange = () => {
-
-        const { h, s, v } = hex2Hsv(this.state.finalColor)
+        const { h, s, v } = hex2Hsv(color.hex)
+        console.log(color.hex, h, s, v)
         this.renderer.setup.color.h = h
         this.renderer.setup.color.s = s / 100
         this.renderer.setup.color.v = v / 100
-
-        this.renderer.setup.color.mode = this.state.mode
-
-        console.log(this.renderer.setup.color)
         this.renderer.invalidate()
-
-    }
+    };
 
     handleChangeMode = (event) => {
         this.setState({ ...this.state, mode: event.target.value })
+        this.renderer.setup.color.mode = event.target.value
+        this.renderer.invalidate()
     }
 
     handleRChange = event => {
@@ -253,7 +242,7 @@ class Fractal extends Component {
                                 style={{ margin: '10px' }}
                                 color={this.state.color}
                                 onChange={this.handleColorChange}
-                                onChangeComplete={this.handleChangeComplete}
+                                disableAlpha={true}
                             />
                             <Select
                                 style={{ margin: '10px' }}
@@ -266,14 +255,6 @@ class Fractal extends Component {
                                 <MenuItem value={'Hue'}>Hue</MenuItem>
                                 <MenuItem value={'Saturation'}>Saturation</MenuItem>
                             </Select>
-                            <Button
-                                style={{ margin: '10px' }}
-                                variant='outlined'
-                                color='primary'
-                                onClick={this.handleFractalColorChange}
-                            >
-                                Change color!
-                            </Button>
                         </AccordionDetails>
 
                     </Accordion>

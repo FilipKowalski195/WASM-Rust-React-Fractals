@@ -35,12 +35,12 @@ class FractalsRenderer {
     setup = {
         maxIters: 1000,
         color: {
-            h: 200.0,
+            h: 360.0,
             s: 1.0,
             v: 1.0,
             smooth: true,
             smoothMove: true,
-            mode: "Value",
+            mode: "Hue",
         },
         fractal: {
             type: "Mandelbrot",
