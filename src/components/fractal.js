@@ -35,14 +35,15 @@ class Fractal extends Component {
         visible: false,
         mode: 'Hue',
         juliaRPoint: 0.285,
-        juliaIPoint: 0.01
+        juliaIPoint: 0.01,
+        expanded: ""
     }
 
     progressTimeoutId = null;
 
     renderer = new FractalsRenderer(
         window.screen.availWidth / window.screen.availHeight,
-        window.screen.availHeight * 0.83
+        window.screen.availHeight * 0.80
     );
 
     componentDidMount() {
@@ -164,6 +165,10 @@ class Fractal extends Component {
         this.renderer.invalidate()
     }
 
+    handleExpand = panel => (event, isExpanded) => {
+        this.setState({...this.state, expanded: isExpanded ? panel : "" })
+    }
+
     render() {
 
         return (
@@ -186,9 +191,10 @@ class Fractal extends Component {
                     {(
                         this.state.loading && !this.state.firstLoading) ? <LinearProgress/> : ''}
                 </div>
-
                 <div>
-                    <Accordion>
+                    <Accordion
+                        expanded={this.state.expanded === "panel1"}
+                        onChange={this.handleExpand("panel1")}>
                         <AccordionSummary
                             expandIcon={<ExpandMoreIcon/>}
                         >
@@ -252,7 +258,9 @@ class Fractal extends Component {
                             </Typography>
                         </AccordionDetails>
                     </Accordion>
-                    <Accordion>
+                    <Accordion
+                        expanded={this.state.expanded === "panel2"}
+                        onChange={this.handleExpand("panel2")}>
                         <AccordionSummary
                             expandIcon={<ExpandMoreIcon/>}>
                             <Typography>Coloring settings</Typography>
@@ -263,7 +271,6 @@ class Fractal extends Component {
                             alignItems: 'left',
                             justifyContent: 'center',
                             flexFlow: 'column wrap',
-
                         }}>
                             <FormControl variant="filled"
                                          style={{
@@ -291,7 +298,9 @@ class Fractal extends Component {
                         </AccordionDetails>
 
                     </Accordion>
-                    <Accordion>
+                    <Accordion
+                        expanded={this.state.expanded === "panel3"}
+                        onChange={this.handleExpand("panel3")}>
                         <AccordionSummary
                             expandIcon={<ExpandMoreIcon/>}
                         >
@@ -319,9 +328,8 @@ class Fractal extends Component {
                             </List>
 
                         </AccordionDetails>
-                    </Accordion>
+                    </Accordion >
                 </div>
-
             </div>
 
         )
