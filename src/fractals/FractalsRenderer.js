@@ -10,7 +10,7 @@ class FractalsRenderer {
         isMovingPlane: false,
         fullResTask: null,
         refreshLoop: null,
-        refreshMs: 5,
+        refreshMs: 10,
         fullResMs: 500,
         precisionScrollLimit: 9.0e-16,
         zoomSpeedLock: 50,
@@ -35,7 +35,7 @@ class FractalsRenderer {
     setup = {
         maxIters: 1000,
         color: {
-            h: 360.0,
+            h: 359.0,
             s: 1.0,
             v: 1.0,
             smooth: true,

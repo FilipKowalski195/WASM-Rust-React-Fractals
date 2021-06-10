@@ -8,7 +8,7 @@ import {
     Avatar,
     Button,
     CircularProgress,
-    Collapse,
+    Collapse, FormControl, InputLabel,
     LinearProgress,
     List,
     ListItem,
@@ -35,7 +35,7 @@ class Fractal extends Component {
         visible: false,
         mode: 'Hue',
         juliaRPoint: 0.285,
-        juliaIPoint: 0.1
+        juliaIPoint: 0.01
     }
 
     progressTimeoutId = null;
@@ -119,8 +119,35 @@ class Fractal extends Component {
     };
 
     handleChangeMode = (event) => {
-        this.setState({ ...this.state, mode: event.target.value })
+
+        let h = 359, s = 1.0, v = 1.0;
+
+        switch (event.target.value) {
+            case "Value": {
+                h = 200;
+                s = 1.0;
+                v = 1.0;
+                break;
+            }
+            case "Saturation": {
+                h = 100;
+                s = 1.0;
+                v = 1.0;
+                break;
+            }
+        }
+
+        this.setState({
+            ...this.state,
+            mode: event.target.value,
+            color: hsv2Hex({ h, s: s * 100, v: v * 100 })
+        })
+
         this.renderer.setup.color.mode = event.target.value
+        this.renderer.setup.color.h = h;
+        this.renderer.setup.color.s = s;
+        this.renderer.setup.color.v = v;
+
         this.renderer.invalidate()
     }
 
@@ -165,38 +192,104 @@ class Fractal extends Component {
                         <AccordionSummary
                             expandIcon={<ExpandMoreIcon/>}
                         >
-                            <Typography>Choose Fractals to show</Typography>
+                            <Typography>Fractals settings</Typography>
                         </AccordionSummary>
                         <AccordionDetails>
                             <Typography>
-                                <Select
-                                    value={this.state.fractalNo}
-                                    onChange={this.handleFractalChange}
-                                >
-                                    <MenuItem value={0}>Mandelbrot set</MenuItem>
-                                    <MenuItem value={1}>Julia Set</MenuItem>
-                                </Select>
+
+                                <FormControl variant="filled"
+                                             style={{ width: '100%' }}>
+                                    <InputLabel id="fractals-label">Fractal</InputLabel>
+                                    <Select
+                                        value={this.state.fractalNo}
+                                        onChange={this.handleFractalChange}
+                                        labelId="fractals-label"
+                                        variant="filled"
+                                        style={{
+                                            width: '100%'
+                                        }}
+                                    >
+                                        <MenuItem value={0}>Mandelbrot set</MenuItem>
+                                        <MenuItem value={1}>Julia Set</MenuItem>
+                                    </Select>
+                                </FormControl>
 
                                 <Collapse in={this.state.fractalNo}>
                                     <TextField
                                         id="standard-number"
-                                        label="Number"
+                                        label="Real part"
                                         type="number"
+                                        style={{
+                                            width: '100%'
+                                        }}
+                                        variant="filled"
                                         value={this.state.juliaRPoint}
                                         onChange={this.handleRChange}
                                     />
                                     <TextField
                                         id="standard-number"
-                                        label="Number"
+                                        label="Imaginary part"
                                         type="number"
+                                        variant="filled"
+                                        style={{
+                                            width: '100%'
+                                        }}
                                         value={this.state.juliaIPoint}
                                         onChange={this.handleIChange}
+
                                     />
-                                        <Button onClick={this.handlePointChange} >Change point</Button>
+                                        <Button
+                                            variant="contained"
+                                            onClick={this.handlePointChange}
+                                            style={{
+                                                width: '100%'
+                                            }}
+                                        >
+                                            Apply
+                                        </Button>
                                 </Collapse>
 
                             </Typography>
                         </AccordionDetails>
+                    </Accordion>
+                    <Accordion>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon/>}>
+                            <Typography>Coloring settings</Typography>
+                        </AccordionSummary>
+
+                        <AccordionDetails style={{
+                            display: 'flex',
+                            alignItems: 'left',
+                            justifyContent: 'center',
+                            flexFlow: 'column wrap',
+
+                        }}>
+                            <FormControl variant="filled"
+                                         style={{
+                                             marginBottom: '10px',
+                                             width: '100%'
+                                         }}>
+                                <InputLabel id="mode-label">Mode</InputLabel>
+                                <Select
+                                    labelId="mode-label"
+                                    value={this.state.mode}
+                                    onChange={this.handleChangeMode}
+                                >
+                                    <MenuItem value={'Value'}>Value</MenuItem>
+                                    <MenuItem value={'Hue'}>Hue</MenuItem>
+                                    <MenuItem value={'Saturation'}>Saturation</MenuItem>
+                                </Select>
+                            </FormControl>
+
+                            <SketchPicker
+                                style={{ margin: '10px' }}
+                                color={this.state.color}
+                                onChange={this.handleColorChange}
+                                disableAlpha={true}
+                            />
+                        </AccordionDetails>
+
                     </Accordion>
                     <Accordion>
                         <AccordionSummary
@@ -224,39 +317,6 @@ class Fractal extends Component {
                             </List>
 
                         </AccordionDetails>
-                    </Accordion>
-                    <Accordion>
-                        <AccordionSummary
-                            expandIcon={<ExpandMoreIcon/>}
-                        >
-                            <Typography>Color-picker placeholder</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexFlow: 'column wrap',
-
-                        }}>
-                            <SketchPicker
-                                style={{ margin: '10px' }}
-                                color={this.state.color}
-                                onChange={this.handleColorChange}
-                                disableAlpha={true}
-                            />
-                            <Select
-                                style={{ margin: '10px' }}
-                                labelId="demo-simple-select-label"
-                                id="demo-simple-select"
-                                value={this.state.mode}
-                                onChange={this.handleChangeMode}
-                            >
-                                <MenuItem value={'Value'}>Value</MenuItem>
-                                <MenuItem value={'Hue'}>Hue</MenuItem>
-                                <MenuItem value={'Saturation'}>Saturation</MenuItem>
-                            </Select>
-                        </AccordionDetails>
-
                     </Accordion>
                 </div>
 
