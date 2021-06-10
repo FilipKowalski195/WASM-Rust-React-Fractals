@@ -39,7 +39,7 @@ class FractalsRenderer {
             s: 1.0,
             v: 1.0,
             smooth: true,
-            smoothMove: true,
+            smoothOnPreview: true,
             mode: "Hue",
         },
         fractal: {
@@ -149,7 +149,7 @@ class FractalsRenderer {
                 fractal: this.setup.fractal,
                 color: {
                     ...this.setup.color,
-                    smooth: fullRes ? this.setup.color.smooth : this.setup.color.smoothMove
+                    smooth: fullRes ? this.setup.color.smooth : this.setup.color.smoothOnPreview
                 }
             });
         }
