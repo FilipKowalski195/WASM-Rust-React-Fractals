@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, {Component} from "react";
 import FractalsRenderer from "../fractals/FractalsRenderer";
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import {
@@ -18,9 +18,9 @@ import {
     Select, TextField,
     Typography
 } from '@material-ui/core';
-import { SketchPicker } from 'react-color';
+import {SketchPicker} from 'react-color';
 import MemoryIcon from '@material-ui/icons/Memory';
-import { hex2Hsv, hsv2Hex } from 'colorsys'
+import {hex2Hsv, hsv2Hex} from 'colorsys'
 
 class Fractal extends Component {
 
@@ -46,11 +46,11 @@ class Fractal extends Component {
     );
 
     componentDidMount() {
-        const { h, s, v } = this.renderer.setup.color
+        const {h, s, v} = this.renderer.setup.color
         this.setState({
             width: this.renderer.getWidth(),
             height: this.renderer.getHeight(),
-            color: hsv2Hex({ h, s: s * 100, v: v * 100 })
+            color: hsv2Hex({h, s: s * 100, v: v * 100})
         })
 
         this.renderer.injectCanvas(this.refs.canvas);
@@ -68,10 +68,10 @@ class Fractal extends Component {
             clearTimeout(this.progressTimeoutId)
 
             if (progress) {
-                this.setState({ ...this.state, loading: true })
+                this.setState({...this.state, loading: true})
             } else {
                 this.progressTimeoutId = setTimeout(() => {
-                    this.setState({ ...this.state, loading: false })
+                    this.setState({...this.state, loading: false})
                 }, 100);
             }
 
@@ -109,8 +109,8 @@ class Fractal extends Component {
     };
 
     handleColorChange = (color) => {
-        this.setState({ ...this.state, color: color.hex });
-        const { h, s, v } = hex2Hsv(color.hex)
+        this.setState({...this.state, color: color.hex});
+        const {h, s, v} = hex2Hsv(color.hex)
         console.log(color.hex, h, s, v)
         this.renderer.setup.color.h = h
         this.renderer.setup.color.s = s / 100
@@ -140,7 +140,7 @@ class Fractal extends Component {
         this.setState({
             ...this.state,
             mode: event.target.value,
-            color: hsv2Hex({ h, s: s * 100, v: v * 100 })
+            color: hsv2Hex({h, s: s * 100, v: v * 100})
         })
 
         this.renderer.setup.color.mode = event.target.value
@@ -174,11 +174,11 @@ class Fractal extends Component {
                 alignItems: 'flex-start',
             }}>
                 <div>
-                    <div style={{ border: '1px solid black' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <div style={{border: '1px solid black'}}>
+                        <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                             {this.state.firstLoading ?
-                                <CircularProgress color="inherit" style={{ position: 'absolute' }}/> : ''}
-                            <canvas ref="canvas" style={{ visibility: this.state.visible ? 'visible' : 'hidden' }}
+                                <CircularProgress color="inherit" style={{position: 'absolute'}}/> : ''}
+                            <canvas ref="canvas" style={{visibility: this.state.visible ? 'visible' : 'hidden'}}
                                     width={this.state.width} height={this.state.height}/>
                         </div>
                     </div>
@@ -198,7 +198,7 @@ class Fractal extends Component {
                             <Typography>
 
                                 <FormControl variant="filled"
-                                             style={{ width: '100%' }}>
+                                             style={{width: '100%'}}>
                                     <InputLabel id="fractals-label">Fractal</InputLabel>
                                     <Select
                                         value={this.state.fractalNo}
@@ -238,15 +238,15 @@ class Fractal extends Component {
                                         onChange={this.handleIChange}
 
                                     />
-                                        <Button
-                                            variant="contained"
-                                            onClick={this.handlePointChange}
-                                            style={{
-                                                width: '100%'
-                                            }}
-                                        >
-                                            Apply
-                                        </Button>
+                                    <Button
+                                        variant="contained"
+                                        onClick={this.handlePointChange}
+                                        style={{
+                                            width: '100%'
+                                        }}
+                                    >
+                                        Apply
+                                    </Button>
                                 </Collapse>
 
                             </Typography>
@@ -283,7 +283,7 @@ class Fractal extends Component {
                             </FormControl>
 
                             <SketchPicker
-                                style={{ margin: '10px' }}
+                                style={{margin: '10px'}}
                                 color={this.state.color}
                                 onChange={this.handleColorChange}
                                 disableAlpha={true}
@@ -301,7 +301,6 @@ class Fractal extends Component {
                             <List>
                                 {this.state.stats?.map((it) => {
                                     return (
-
                                         <ListItem>
                                             <ListItemAvatar>
                                                 <Avatar>
@@ -310,7 +309,10 @@ class Fractal extends Component {
                                             </ListItemAvatar>
                                             <ListItemText
                                                 primary={`Thread ${it.id}`}
-                                                secondary={`Preview time ${parseInt(it.scaledMs)} full time: ${parseInt(it.fullResMs)}`}/>
+                                                secondary={<div>
+                                                    <div>Preview time: {parseInt(it.scaledMs)} ms</div>
+                                                    <div>Full time: {parseInt(it.fullResMs)} ms</div>
+                                                </div>}/>
                                         </ListItem>
                                     )
                                 })}

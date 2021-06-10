@@ -16,8 +16,8 @@ class FractalsRenderer {
         zoomSpeedLock: 50,
     }
 
-    _timeInterval = 200
-    _lastUpdate = 0
+    _statsUpdateTimeInterval = 400
+    _lastStatsUpdate = 0
 
     _padIndex = null
     _padSettings = {
@@ -272,19 +272,17 @@ class FractalsRenderer {
 
         this.updateCanvas(e.data.data, e.data.width, e.data.height, e.data.x, e.data.y);
 
-        if (this._lastUpdate !== 0 && performance.now() - this._lastUpdate < this._timeInterval) return
-
-        this._lastUpdate = performance.now()
-
         if (e.data.isFullRes) {
             this.stats[e.data.workerId].fullResMs = e.data.time
         } else {
             this.stats[e.data.workerId].scaledMs = e.data.time
         }
 
+        if (this._lastStatsUpdate !== 0 && performance.now() - this._lastStatsUpdate < this._statsUpdateTimeInterval) return
+
+        this._lastStatsUpdate = performance.now()
+
         this._statsListeners.forEach((listener) => listener(this.stats))
-
-
     }
 
     updateCanvas(data, width, height, x, y) {
