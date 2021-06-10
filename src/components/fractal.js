@@ -210,7 +210,7 @@ class Fractal extends Component {
                                         }}
                                     >
                                         <MenuItem value={0}>Mandelbrot set</MenuItem>
-                                        <MenuItem value={1}>Julia Set</MenuItem>
+                                        <MenuItem value={1}>Julia sets</MenuItem>
                                     </Select>
                                 </FormControl>
 
