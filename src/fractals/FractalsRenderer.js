@@ -1,4 +1,4 @@
-import Worker from './worker/fractals.worker'
+import FractalsWorker from './worker/fractals.worker'
 import RepeatedWorkerPool from './worker/repeatedWorkerPool'
 
 class FractalsRenderer {
@@ -23,7 +23,7 @@ class FractalsRenderer {
     _padSettings = {
         deadZone: 0.1,
         scrollModifier: 20,
-        moveModifier: 15,
+        moveModifier: 25,
     }
 
     _canvas = null;
@@ -31,6 +31,7 @@ class FractalsRenderer {
     _progressListeners = [];
     stats = []
     _statsListeners = []
+    _connectedListeners = []
 
     setup = {
         maxIters: 1000,
@@ -48,21 +49,41 @@ class FractalsRenderer {
         }
     }
 
-    resetPlane() {
-        this._setup.plane = { ...this.basePlane }
+    constructor(minWidth, minHeight) {
+        this.updateSize(minWidth, minHeight)
+        this.parts = this._setup.workers;
+        this.pool = new RepeatedWorkerPool(() => new FractalsWorker(), this._setup.workers);
+
+        console.log(this._setup)
+
+        for (let i = 0; i < this._setup.workers; i++) {
+            this.stats.push({
+                id: i,
+                scaledMs: 0,
+                fullResMs: 0
+            })
+        }
     }
 
-    constructor(screenRatio, maxHeight) {
-
-        const scaling = 5;
+    updateSize(minWidth, minHeight) {
+        const screenRatio = minWidth / minHeight;
+        const scaling = 8;
         const workers = navigator.hardwareConcurrency;
 
         const factor = scaling * workers;
 
-        const height = Math.floor(maxHeight / factor) * factor;
+        let height = Math.floor(minHeight / factor) * factor;
         let width = height * screenRatio;
 
+        while (minHeight > height) {
+            height += factor;
+        }
+
         width = Math.floor(width / scaling) * scaling;
+
+        while (minWidth > width) {
+            width += scaling;
+        }
 
         const planeLengthX = 3 * screenRatio;
 
@@ -76,44 +97,44 @@ class FractalsRenderer {
         }
 
         this.basePlane = { ...plane }
+        this.invalidate()
+    }
 
-        this.parts = this._setup.workers;
-        this.pool = new RepeatedWorkerPool(() => new Worker(), this._setup.workers);
-
-        for (let i = 0; i < this._setup.workers; i++) {
-            this.stats.push({
-                id: i,
-                scaledMs: 0,
-                fullResMs: 0
-            })
-        }
+    resetPlane() {
+        this._setup.plane = { ...this.basePlane }
     }
 
     init() {
 
-        window.addEventListener('gamepadconnected', (e) => {
-            this._padIndex = e.gamepad.index;
+    window.addEventListener('gamepadconnected', (e) => {
+        this._padIndex = e.gamepad.index;
+        this._connectedListeners.forEach((listener) => {
+            listener(e.gamepad.id, true)
         })
+    })
 
-        window.addEventListener('gamepaddisconnected', (e) => {
-            if (this._padIndex === e.gamepad.index) {
-                this._padIndex = null;
-            }
+    window.addEventListener('gamepaddisconnected', (e) => {
+        this._connectedListeners.forEach((listener) => {
+            listener(e.gamepad.id, false)
         })
+        if (this._padIndex === e.gamepad.index) {
+            this._padIndex = null;
+        }
+    })
 
-        this._render.refreshLoop = setInterval(() => {
-            this.processPadEvents()
+    this._render.refreshLoop = setInterval(() => {
+        this.processPadEvents()
 
-            const shouldRender = this._render.fractalChanged &&
-                (this._render.fullResTask == null || !this.pool.isOccupied())
+        const shouldRender = this._render.fractalChanged &&
+            (this._render.fullResTask == null || !this.pool.isOccupied())
 
-            if (shouldRender) {
+        if (shouldRender) {
 
-                this.loadFrame(false)
-                this.scheduleFullRes()
-            }
-        }, this._render.refreshMs)
-    }
+            this.loadFrame(false)
+            this.scheduleFullRes()
+        }
+    }, this._render.refreshMs)
+}
 
     close() {
         if (this._render.refreshLoop != null) {
@@ -234,7 +255,7 @@ class FractalsRenderer {
         this._setup.plane[2] -= yShrink;
         this._setup.plane[3] += yShrink;
 
-        this._render.fractalChanged = true
+        this.invalidate()
     }
 
     movePlaneByMouseMovement(movementX, movementY) {
@@ -248,7 +269,7 @@ class FractalsRenderer {
         this._setup.plane[2] -= yMove;
         this._setup.plane[3] -= yMove;
 
-        this._render.fractalChanged = true
+        this.invalidate()
     }
 
     getParticleX() {
@@ -326,6 +347,10 @@ class FractalsRenderer {
 
     addOnNewWorkerStats(listener) {
         this._statsListeners.push(listener)
+    }
+
+    addOnGamepadConnected(listener) {
+        this._connectedListeners.push(listener)
     }
 }
 

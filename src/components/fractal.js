@@ -8,19 +8,49 @@ import {
     Avatar,
     Button, Checkbox,
     CircularProgress,
-    Collapse, FormControl, FormControlLabel, InputLabel,
+    Collapse,
+    Drawer,
+    Fab,
+    FormControl,
+    FormControlLabel,
+    InputLabel,
     LinearProgress,
     List,
     ListItem,
     ListItemAvatar,
     ListItemText,
-    MenuItem,
-    Select, Slider, TextField,
-    Typography
+    MenuItem, MuiThemeProvider,
+    Select, Slider, Snackbar, TextField,
+    Typography,
 } from '@material-ui/core';
 import {SketchPicker} from 'react-color';
 import MemoryIcon from '@material-ui/icons/Memory';
+import DoubleArrowIcon from '@material-ui/icons/DoubleArrow';
+import SettingsIcon from '@material-ui/icons/Settings';
 import {hex2Hsv, hsv2Hex} from 'colorsys'
+import MuiAlert from '@material-ui/lab/Alert';
+
+import { createMuiTheme } from '@material-ui/core/styles';
+import {orange} from "@material-ui/core/colors";
+import {blueGrey} from "@material-ui/core/colors";
+
+const theme = createMuiTheme({
+    palette: {
+        primary: {
+            main: orange[500],
+        },
+        secondary: {
+            main: orange[500],
+        },
+        text: {
+            primary: "#fff",
+            secondary: "#d7d7d7"
+        },
+        background: {
+            paper: blueGrey[700]
+        }
+    },
+});
 
 class Fractal extends Component {
 
@@ -43,13 +73,17 @@ class Fractal extends Component {
         smooth: true,
         smoothOnPreview: true,
         itersValue: 0,
+        gamepadSnackBar: false,
+        gamepadConnected: false,
+        gamepadId: "",
+        settingsOpen: false
     }
 
     progressTimeoutId = null;
 
     renderer = new FractalsRenderer(
-        window.screen.availWidth / window.screen.availHeight,
-        window.screen.availHeight * 0.80
+        window.innerWidth,
+        window.innerHeight
     );
 
     componentDidMount() {
@@ -93,7 +127,27 @@ class Fractal extends Component {
                 stats
             })
         })
+        this.renderer.addOnGamepadConnected((id, connected) => {
+            this.setState({
+                ...this.state,
+                gamepadSnackBar: true,
+                gamepadConnected: connected,
+                gamepadId: id
+            })
+        })
 
+        window.addEventListener('resize', () => {
+            this.renderer.updateSize(
+                window.innerWidth,
+                window.innerHeight
+            )
+            this.setState({
+                ...this.state,
+                width: this.renderer.getWidth(),
+                height: this.renderer.getHeight(),
+            })
+
+        });
     }
 
     componentWillUnmount() {
@@ -175,7 +229,7 @@ class Fractal extends Component {
     }
 
     handleExpand = panel => (event, isExpanded) => {
-        this.setState({...this.state, expanded: isExpanded ? panel : "" })
+        this.setState({...this.state, expanded: isExpanded ? panel : ""})
     }
 
     handleSmoothChange = event => {
@@ -193,7 +247,7 @@ class Fractal extends Component {
     }
 
     handleSmoothOnPreviewChange = event => {
-        this.setState({ ...this.state, smoothOnPreview: event.target.checked });
+        this.setState({...this.state, smoothOnPreview: event.target.checked});
         this.renderer.setup.color.smoothOnPreview = event.target.checked;
         this.renderer.invalidate();
     }
@@ -235,223 +289,268 @@ class Fractal extends Component {
         this.setState({...this.state, itersValue: this.filteredItersValue()})
     }
 
-    render() {
+    handleSnackbarClose = () => {
+        this.setState({...this.state, gamepadSnackBar: false,})
+    }
 
+    render() {
         return (
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-around',
-                alignContent: 'center',
-                alignItems: 'flex-start',
-            }}>
-                <div>
-                    <div style={{border: '1px solid black'}}>
-                        <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-                            {this.state.firstLoading ? <CircularProgress color="inherit" style={{position: 'absolute'}}/> : ''}
+            <MuiThemeProvider  theme={theme}>
+                <div style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    flexFlow: "column",
+                }}>
+                    <Snackbar open={this.state.gamepadSnackBar} autoHideDuration={3000} onClose={this.handleSnackbarClose}>
+                        <MuiAlert elevation={6} variant="filled"
+                                  severity={this.state.gamepadConnected ? "success" : "warning"}>
+                            Gamepad '{this.state.gamepadId}' {this.state.gamepadConnected ? "connected" : "disconnected"}!
+                        </MuiAlert>
+                    </Snackbar>
+                    <Fab color="default"
+                         onClick={ () => this.setState({...this.state, settingsOpen: true}) }
+                         style={{
+                             margin: 0,
+                             bottom: 'auto',
+                             right: 20,
+                             top: 20,
+                             left: 'auto',
+                             position: 'fixed',
+                         }}>
+                        <SettingsIcon/>
+                    </Fab>
+                    <div style={{width: '100%'}}>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            width: '100%'
+                        }}>
+                            {this.state.firstLoading ?
+                                <CircularProgress color="inherit" style={{position: 'absolute'}}/> : ''}
                             <canvas ref="canvas" style={{visibility: this.state.visible ? 'visible' : 'hidden'}}
                                     width={this.state.width} height={this.state.height}/>
                         </div>
                     </div>
-
-                    {(
-                        this.state.loading && !this.state.firstLoading) ? <LinearProgress/> : ''}
-                </div>
-                <div>
-                    <Accordion
-                        expanded={this.state.expanded === "panel1"}
-                        onChange={this.handleExpand("panel1")}>
-                        <AccordionSummary
-                            expandIcon={<ExpandMoreIcon/>}
-                        >
-                            <Typography>Fractals settings</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <Typography>
-                                <Typography id="iterations-label">
-                                    Iterations
-                                </Typography>
-                                <div style={{
-                                    display: "flex",
-                                    justifyContent: "center",
-                                    alignItems: "center",
-                                    flexFlow: "row",
-                                    marginBottom: "10px"
-                                }}>
-                                    <Slider
-                                        onChange={this.handleIterationsChangeBySlider}
-                                        value={this.filteredItersValue()}
-                                        aria-labelledby="iterations-label"
-                                        valueLabelDisplay="auto"
-                                        step={1}
-                                        min={this.minIters}
-                                        max={this.maxIters}
-                                        style={{
-                                            flexShrink: 2,
-                                            marginRight: '10px'
-                                        }}
-                                    />
-                                    <TextField
-                                        type="number"
-                                        value={this.state.itersValue}
-                                        onChange={this.handleIterationsChangeByField}
-                                        onBlur={this.handleItersBlur}
-                                        style={{
-                                            flexShrink: 2
-                                        }}
-                                    />
-                                </div>
-                                <FormControl variant="filled"
-                                             style={{width: '100%'}}>
-                                    <InputLabel id="fractals-label">Fractal</InputLabel>
-                                    <Select
-                                        value={this.state.fractalNo}
-                                        onChange={this.handleFractalChange}
-                                        labelId="fractals-label"
-                                        variant="filled"
-                                        style={{
-                                            width: '100%'
-                                        }}
-                                    >
-                                        <MenuItem value={0}>Mandelbrot set</MenuItem>
-                                        <MenuItem value={1}>Julia sets</MenuItem>
-                                    </Select>
-                                </FormControl>
-
-                                <Collapse in={this.state.fractalNo}>
-                                    <TextField
-                                        id="standard-number"
-                                        label="Real part"
-                                        type="number"
-                                        style={{
-                                            width: '100%'
-                                        }}
-                                        variant="filled"
-                                        value={this.state.juliaRPoint}
-                                        onChange={this.handleRChange}
-                                    />
-                                    <TextField
-                                        id="standard-number"
-                                        label="Imaginary part"
-                                        type="number"
-                                        variant="filled"
-                                        style={{
-                                            width: '100%'
-                                        }}
-                                        value={this.state.juliaIPoint}
-                                        onChange={this.handleIChange}
-
-                                    />
-                                    <Button
-                                        variant="contained"
-                                        onClick={this.handlePointChange}
-                                        style={{
-                                            width: '100%'
-                                        }}
-                                    >
-                                        Apply
-                                    </Button>
-                                </Collapse>
-
-                            </Typography>
-                        </AccordionDetails>
-                    </Accordion>
-                    <Accordion
-                        expanded={this.state.expanded === "panel2"}
-                        onChange={this.handleExpand("panel2")}>
-                        <AccordionSummary
-                            expandIcon={<ExpandMoreIcon/>}>
-                            <Typography>Coloring settings</Typography>
-                        </AccordionSummary>
-
-                        <AccordionDetails style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexFlow: 'column wrap',
-                        }}>
-
-                            <div style={{ width: "100%" }}>
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={this.state.smooth}
-                                            onChange={this.handleSmoothChange}/>
-                                    }
-                                    label="Smoothing"
-                                />
-
-                                <Collapse in={this.state.smooth}>
-                                    <FormControlLabel
-                                        control={
-                                            <Checkbox
-                                                disabled={!this.state.smooth}
-                                                checked={this.state.smoothOnPreview}
-                                                onChange={this.handleSmoothOnPreviewChange}/>
-                                        }
-                                        label="Smoothing on preview"
-                                    />
-                                </Collapse>
-                            </div>
-                            <FormControl variant="filled"
-                                         style={{
-                                             marginBottom: '10px',
-                                             width: '100%',
-                                         }}>
-                                <InputLabel id="mode-label">Mode</InputLabel>
-                                <Select
-                                    labelId="mode-label"
-                                    value={this.state.mode}
-                                    onChange={this.handleChangeMode}
+                    {(this.state.loading && !this.state.firstLoading) ? <LinearProgress
+                        style={{
+                            margin: 0,
+                            bottom: 0,
+                            left:  0,
+                            right: 'auto',
+                            top: 'auto',
+                            position: 'fixed',
+                            width: "100%"
+                        }}
+                    /> : ''}
+                    <Drawer
+                        anchor="right"
+                        open={this.state.settingsOpen}
+                        variant={"persistent"}
+                    >
+                        <div style={{ maxWidth: "300px" }}>
+                            <Button
+                                onClick={ () => this.setState({...this.state, settingsOpen: false}) }>
+                                <DoubleArrowIcon />
+                            </Button>
+                            <Accordion
+                                expanded={this.state.expanded === "panel1"}
+                                onChange={this.handleExpand("panel1")}>
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon/>}
                                 >
-                                    <MenuItem value={'Hue'}>Hue</MenuItem>
-                                    <MenuItem value={'Saturation'}>Saturation</MenuItem>
-                                    <MenuItem value={'Value'}>Value</MenuItem>
-                                </Select>
-                            </FormControl>
+                                    <Typography>Fractals settings</Typography>
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                    <Typography>
+                                        <Typography id="iterations-label">
+                                            Iterations
+                                        </Typography>
+                                        <div style={{
+                                            display: "flex",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                            flexFlow: "row",
+                                            marginBottom: "10px"
+                                        }}>
+                                            <Slider
+                                                onChange={this.handleIterationsChangeBySlider}
+                                                value={this.filteredItersValue()}
+                                                aria-labelledby="iterations-label"
+                                                valueLabelDisplay="auto"
+                                                step={1}
+                                                min={this.minIters}
+                                                max={this.maxIters}
+                                                style={{
+                                                    flexShrink: 2,
+                                                    marginRight: '10px'
+                                                }}
+                                            />
+                                            <TextField
+                                                type="number"
+                                                value={this.state.itersValue}
+                                                onChange={this.handleIterationsChangeByField}
+                                                onBlur={this.handleItersBlur}
+                                                style={{
+                                                    flexShrink: 2
+                                                }}
+                                            />
+                                        </div>
+                                        <FormControl variant="filled"
+                                                     style={{width: '100%'}}>
+                                            <InputLabel id="fractals-label">Fractal</InputLabel>
+                                            <Select
+                                                value={this.state.fractalNo}
+                                                onChange={this.handleFractalChange}
+                                                labelId="fractals-label"
+                                                variant="filled"
+                                                style={{
+                                                    width: '100%'
+                                                }}
+                                            >
+                                                <MenuItem value={0}>Mandelbrot set</MenuItem>
+                                                <MenuItem value={1}>Julia sets</MenuItem>
+                                            </Select>
+                                        </FormControl>
 
-                            <SketchPicker
-                                style={{margin: '10px'}}
-                                color={this.state.color}
-                                onChange={this.handleColorChange}
-                                disableAlpha={true}
-                            />
-                        </AccordionDetails>
+                                        <Collapse in={this.state.fractalNo}>
+                                            <TextField
+                                                id="standard-number"
+                                                label="Real part"
+                                                type="number"
+                                                style={{
+                                                    width: '100%'
+                                                }}
+                                                variant="filled"
+                                                value={this.state.juliaRPoint}
+                                                onChange={this.handleRChange}
+                                            />
+                                            <TextField
+                                                id="standard-number"
+                                                label="Imaginary part"
+                                                type="number"
+                                                variant="filled"
+                                                style={{
+                                                    width: '100%',
+                                                    marginBottom: '10px'
+                                                }}
+                                                value={this.state.juliaIPoint}
+                                                onChange={this.handleIChange}
 
-                    </Accordion>
-                    <Accordion
-                        expanded={this.state.expanded === "panel3"}
-                        onChange={this.handleExpand("panel3")}>
-                        <AccordionSummary
-                            expandIcon={<ExpandMoreIcon/>}
-                        >
-                            <Typography>Statistics</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <List>
-                                {this.state.stats?.map((it) => {
-                                    return (
-                                        <ListItem>
-                                            <ListItemAvatar>
-                                                <Avatar>
-                                                    <MemoryIcon/>
-                                                </Avatar>
-                                            </ListItemAvatar>
-                                            <ListItemText
-                                                primary={`Thread ${it.id}`}
-                                                secondary={<div>
-                                                    <div>Preview time: {parseInt(it.scaledMs)} ms</div>
-                                                    <div>Full time: {parseInt(it.fullResMs)} ms</div>
-                                                </div>}/>
-                                        </ListItem>
-                                    )
-                                })}
-                            </List>
+                                            />
+                                            <Button
+                                                variant="contained"
+                                                onClick={this.handlePointChange}
+                                                style={{
+                                                    width: '100%'
+                                                }}
+                                            >
+                                                Apply
+                                            </Button>
+                                        </Collapse>
 
-                        </AccordionDetails>
-                    </Accordion >
+                                    </Typography>
+                                </AccordionDetails>
+                            </Accordion>
+                            <Accordion
+                                expanded={this.state.expanded === "panel2"}
+                                onChange={this.handleExpand("panel2")}>
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon/>}>
+                                    <Typography>Coloring settings</Typography>
+                                </AccordionSummary>
+
+                                <AccordionDetails style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexFlow: 'column wrap',
+                                }}>
+
+                                    <div style={{width: "100%"}}>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={this.state.smooth}
+                                                    onChange={this.handleSmoothChange}/>
+                                            }
+                                            label="Smoothing"
+                                        />
+
+                                        <Collapse in={this.state.smooth}>
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        disabled={!this.state.smooth}
+                                                        checked={this.state.smoothOnPreview}
+                                                        onChange={this.handleSmoothOnPreviewChange}/>
+                                                }
+                                                label="Smoothing on preview"
+                                            />
+                                        </Collapse>
+                                    </div>
+                                    <FormControl variant="filled"
+                                                 style={{
+                                                     marginBottom: '10px',
+                                                     width: '100%',
+                                                 }}>
+                                        <InputLabel id="mode-label">Mode</InputLabel>
+                                        <Select
+                                            labelId="mode-label"
+                                            value={this.state.mode}
+                                            onChange={this.handleChangeMode}
+                                        >
+                                            <MenuItem value={'Hue'}>Hue</MenuItem>
+                                            <MenuItem value={'Saturation'}>Saturation</MenuItem>
+                                            <MenuItem value={'Value'}>Value</MenuItem>
+                                        </Select>
+                                    </FormControl>
+
+                                    <SketchPicker
+                                        style={{margin: '10px'}}
+                                        color={this.state.color}
+                                        onChange={this.handleColorChange}
+                                        disableAlpha={true}
+                                    />
+                                </AccordionDetails>
+
+                            </Accordion>
+                            <Accordion
+                                expanded={this.state.expanded === "panel3"}
+                                onChange={this.handleExpand("panel3")}>
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon/>}
+                                >
+                                    <Typography>Statistics</Typography>
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                    <List>
+                                        {this.state.stats?.map((it) => {
+                                            return (
+                                                <ListItem>
+                                                    <ListItemAvatar>
+                                                        <Avatar>
+                                                            <MemoryIcon/>
+                                                        </Avatar>
+                                                    </ListItemAvatar>
+                                                    <ListItemText
+                                                        primary={`THREAD ${it.id + 1}`}
+                                                        secondary={<div>
+                                                            <div>Preview time: {parseInt(it.scaledMs)} ms</div>
+                                                            <div>Full time: {parseInt(it.fullResMs)} ms</div>
+                                                        </div>}/>
+                                                </ListItem>
+                                            )
+                                        })}
+                                    </List>
+
+                                </AccordionDetails>
+                            </Accordion>
+                        </div>
+                    </Drawer>
                 </div>
-            </div>
-
+            </MuiThemeProvider >
         )
     }
 }
